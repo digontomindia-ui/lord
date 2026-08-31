@@ -3,17 +3,17 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../shared/apiClient';
-import { ShieldCheck, LogIn, Sparkles, AlertCircle, Loader2 } from 'lucide-react';
+import { ShieldCheck, LogIn, Sparkles, AlertCircle, Loader2, User, Store, Scissors, Truck, Shield } from 'lucide-react';
 
 const DEMO_ACCOUNTS = [
-  { role: 'SUPER_ADMIN', label: '👑 Super Admin', mobile: '9999999999', path: '/admin' },
-  { role: 'SHOP', label: '🏬 Shop Owner', mobile: '9000000001', path: '/shop' },
-  { role: 'MASTER', label: '✂️ Master Workshop', mobile: '8000000001', path: '/master' },
-  { role: 'TAILOR', label: '🧵 Tailor', mobile: '7000000001', path: '/tailor' },
-  { role: 'DELIVERY_BOY', label: '🛵 Delivery Boy', mobile: '6000000001', path: '/delivery' },
+  { role: 'SUPER_ADMIN', label: 'Super Admin', mobile: '9999999999', path: '/admin', icon: Shield },
+  { role: 'SHOP', label: 'Shop Owner', mobile: '9000000001', path: '/shop', icon: Store },
+  { role: 'MASTER', label: 'Master Workshop', mobile: '8000000001', path: '/master', icon: Scissors },
+  { role: 'TAILOR', label: 'Tailor', mobile: '7000000001', path: '/tailor', icon: Scissors },
+  { role: 'DELIVERY_BOY', label: 'Delivery Boy', mobile: '6000000001', path: '/delivery', icon: Truck },
 ];
 
-const Login = () => {
+export const Login = () => {
   const [mobile, setMobile] = useState('9999999999');
   const [password, setPassword] = useState('password123');
   const [loading, setLoading] = useState(false);
@@ -42,7 +42,7 @@ const Login = () => {
         else navigate('/');
       }
     } catch (err) {
-      setError(err?.message || 'Login failed. Please check credentials or seed demo database.');
+      setError(err?.message || 'Login failed. Please check credentials.');
     } finally {
       setLoading(false);
     }
@@ -60,31 +60,33 @@ const Login = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="glass-panel"
-        style={{ padding: '2.5rem', maxWidth: '440px', width: '100%', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', background: 'var(--bg-canvas)' }}>
+      <div 
+        className="erp-card"
+        style={{ padding: '2rem', maxWidth: '400px', width: '100%', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}
       >
         <div style={{ textAlign: 'center' }}>
-          <div style={{ display: 'inline-flex', padding: '0.75rem', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '50%', marginBottom: '1rem' }}>
-            <ShieldCheck size={40} color="var(--accent-color)" />
+          <div style={{ display: 'inline-flex', padding: '0.6rem', background: 'rgba(99, 102, 241, 0.1)', borderRadius: 'var(--radius-sm)', marginBottom: '0.75rem' }}>
+            <ShieldCheck size={32} color="var(--accent-primary)" />
           </div>
-          <h1 style={{ fontSize: '1.6rem', fontWeight: 800, letterSpacing: '-0.025em' }}>LORD'S BESPOKE</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.25rem' }}>Alteration ERP System</p>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+            LORD'S BESPOKE
+          </h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.8125rem', marginTop: '0.2rem' }}>
+            Enterprise Alteration Platform
+          </p>
         </div>
 
         {error && (
-          <div style={{ padding: '0.75rem 1rem', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 'var(--radius-md)', display: 'flex', gap: '0.5rem', alignItems: 'center', color: '#fca5a5', fontSize: '0.875rem' }}>
-            <AlertCircle size={18} />
+          <div style={{ padding: '0.6rem 0.85rem', background: 'var(--error-bg)', border: '1px solid var(--error-border)', borderRadius: 'var(--radius-sm)', display: 'flex', gap: '0.4rem', alignItems: 'center', color: '#f87171', fontSize: '0.8rem' }}>
+            <AlertCircle size={15} />
             <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+            <label style={{ display: 'block', marginBottom: '0.35rem', fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
               Mobile Number
             </label>
             <input 
@@ -93,11 +95,11 @@ const Login = () => {
               onChange={(e) => setMobile(e.target.value)}
               placeholder="e.g. 9999999999"
               required
-              style={{ width: '100%', padding: '0.75rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', color: 'white', outline: 'none' }} 
+              style={{ width: '100%', padding: '0.65rem 0.85rem' }} 
             />
           </div>
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+            <label style={{ display: 'block', marginBottom: '0.35rem', fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
               Password
             </label>
             <input 
@@ -106,51 +108,56 @@ const Login = () => {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
-              style={{ width: '100%', padding: '0.75rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', color: 'white', outline: 'none' }} 
+              style={{ width: '100%', padding: '0.65rem 0.85rem' }} 
             />
           </div>
 
-          <motion.button 
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
+          <button 
             type="submit"
             disabled={loading}
-            style={{ background: 'var(--accent-color)', color: 'white', border: 'none', padding: '0.875rem', borderRadius: 'var(--radius-md)', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '0.5rem', boxShadow: 'var(--shadow-glow)' }}
+            style={{ background: 'var(--accent-primary)', color: 'white', border: 'none', padding: '0.7rem', borderRadius: 'var(--radius-sm)', fontWeight: 600, fontSize: '0.8125rem', cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', marginTop: '0.25rem' }}
           >
-            {loading ? <Loader2 size={18} className="animate-spin" /> : <LogIn size={18} />} 
-            {loading ? 'Authenticating...' : 'Sign In to ERP'}
-          </motion.button>
+            {loading ? <Loader2 size={16} className="animate-spin" /> : <LogIn size={16} />} 
+            {loading ? 'Authenticating...' : 'Sign In'}
+          </button>
         </form>
 
-        <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1.25rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', color: 'var(--accent-color)', fontSize: '0.85rem', fontWeight: 600 }}>
-            <Sparkles size={16} /> 1-Click Quick Demo Login:
+        <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.6rem', color: 'var(--text-muted)', fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            Quick Demo Access:
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-            {DEMO_ACCOUNTS.map((acc) => (
-              <button
-                key={acc.role}
-                type="button"
-                onClick={() => handleQuickDemoClick(acc.mobile)}
-                style={{
-                  padding: '0.5rem 0.75rem',
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: 'var(--radius-sm)',
-                  color: 'var(--text-primary)',
-                  fontSize: '0.75rem',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'background 0.2s',
-                  gridColumn: acc.role === 'SUPER_ADMIN' ? 'span 2' : 'auto'
-                }}
-              >
-                {acc.label}
-              </button>
-            ))}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
+            {DEMO_ACCOUNTS.map((acc) => {
+              const IconComp = acc.icon;
+              return (
+                <button
+                  key={acc.role}
+                  type="button"
+                  onClick={() => handleQuickDemoClick(acc.mobile)}
+                  style={{
+                    padding: '0.45rem 0.65rem',
+                    background: 'rgba(15, 23, 42, 0.6)',
+                    border: '1px solid var(--border-subtle)',
+                    borderRadius: 'var(--radius-xs)',
+                    color: 'var(--text-secondary)',
+                    fontSize: '0.72rem',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    textAlign: 'left',
+                    gridColumn: acc.role === 'SUPER_ADMIN' ? 'span 2' : 'auto'
+                  }}
+                >
+                  <IconComp size={13} color="var(--accent-light)" />
+                  <span>{acc.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 };
