@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+const baseURL = import.meta.env.VITE_API_URL || '/api/v1';
+
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -19,18 +21,34 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor for handling 401s (token refresh logic would go here in prod)
+// Response interceptor for handling 401s and auto refresh
 apiClient.interceptors.response.use(
-  (response) => response.data, // Unwrap the axios response object
-  (error) => {
-    if (error.response?.status === 401) {
-      // In a full implementation, trigger token refresh here. 
-      // For now, clear storage and let AuthContext redirect to login.
-      localStorage.removeItem('erp_access_token');
-      localStorage.removeItem('erp_user');
-      window.dispatchEvent(new Event('auth:unauthorized'));
+  (response) => response.data,
+  async (error) => {
+    const originalRequest = error.config;
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      const refreshToken = localStorage.getItem('erp_refresh_token');
+      if (refreshToken) {
+        try {
+          const { data } = await axios.post(`${baseURL}/auth/refresh`, { refreshToken });
+          const newAccessToken = data.data.accessToken;
+          localStorage.setItem('erp_access_token', newAccessToken);
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          return apiClient(originalRequest);
+        } catch (refreshErr) {
+          localStorage.removeItem('erp_access_token');
+          localStorage.removeItem('erp_refresh_token');
+          localStorage.removeItem('erp_user');
+          window.dispatchEvent(new Event('auth:unauthorized'));
+        }
+      } else {
+        localStorage.removeItem('erp_access_token');
+        localStorage.removeItem('erp_user');
+        window.dispatchEvent(new Event('auth:unauthorized'));
+      }
     }
-    return Promise.reject(error.response?.data || error.message);
+    return Promise.reject(error.response?.data || { message: error.message });
   }
 );
 

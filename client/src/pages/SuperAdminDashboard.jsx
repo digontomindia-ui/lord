@@ -1,123 +1,119 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Users, ShoppingBag, Activity, ShieldCheck, BellRing, Settings } from 'lucide-react';
-import WalletModule from '../components/WalletModule';
-
-const StatCard = ({ title, value, subValue, icon: Icon, color, delay }) => (
-  <motion.div 
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay }}
-    className="glass-panel"
-    style={{ padding: '1.5rem', flex: 1, minWidth: '220px', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}
-  >
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', fontWeight: 500 }}>{title}</p>
-      <Icon size={20} color={`rgb(${color})`} />
-    </div>
-    <h2 style={{ fontSize: '2.5rem', fontWeight: 700, margin: '0.5rem 0' }}>{value}</h2>
-    <div style={{ 
-      display: 'inline-flex', 
-      alignItems: 'center', 
-      gap: '0.25rem', 
-      padding: '0.25rem 0.5rem', 
-      background: `rgba(${color}, 0.1)`, 
-      color: `rgb(${color})`,
-      borderRadius: 'var(--radius-sm)',
-      width: 'fit-content',
-      fontSize: '0.75rem',
-      fontWeight: 600
-    }}>
-      {subValue}
-    </div>
-  </motion.div>
-);
+import apiClient from '../shared/apiClient';
+import { Users, DollarSign, Activity, Settings, RefreshCw, Shield, Sparkles, Tag } from 'lucide-react';
 
 const SuperAdminDashboard = () => {
+  const [metrics, setMetrics] = useState(null);
+  const [prices, setPrices] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [dashRes, priceRes] = await Promise.all([
+        apiClient.get('/dashboards/admin').catch(() => ({ data: {} })),
+        apiClient.get('/prices').catch(() => ({ data: [] }))
+      ]);
+      setMetrics(dashRes?.data || {});
+      setPrices(priceRes?.data || []);
+    } catch (err) {
+      console.error('Error fetching admin metrics:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="page-container"
-      style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}
-    >
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="page-container" style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+      
+      {/* Top Header */}
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: '2rem', fontWeight: 700 }}>Super Admin Control</h1>
-          <p style={{ color: 'var(--text-secondary)' }}>System Overview & Network Performance</p>
+          <h1 style={{ fontSize: '2rem', fontWeight: 800 }}>👑 Enterprise Super Admin</h1>
+          <p style={{ color: 'var(--text-secondary)' }}>System-wide performance overview, network governance, and price master oversight.</p>
         </div>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <button className="icon-btn" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', padding: '0.75rem', borderRadius: 'var(--radius-md)', color: 'var(--text-primary)', cursor: 'pointer' }}>
-            <BellRing size={20} />
-          </button>
-          <button className="icon-btn" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', padding: '0.75rem', borderRadius: 'var(--radius-md)', color: 'var(--text-primary)', cursor: 'pointer' }}>
-            <Settings size={20} />
-          </button>
-          <button style={{ background: 'var(--accent-color)', color: 'white', border: 'none', padding: '0.75rem 1.5rem', borderRadius: 'var(--radius-md)', fontWeight: 600, cursor: 'pointer', boxShadow: 'var(--shadow-glow)' }}>
-            System Settings
-          </button>
-        </div>
+        <button 
+          onClick={fetchData} 
+          style={{ background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid var(--border-color)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}
+        >
+          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Refresh Analytics
+        </button>
       </header>
 
-      {/* Top Stats */}
-      <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
-        <StatCard title="Total Active Users" value="8,249" subValue="+12% this month" icon={Users} color="99, 102, 241" delay={0.1} />
-        <StatCard title="Active Orders" value="1,402" subValue="89 in QC Failed" icon={ShoppingBag} color="16, 185, 129" delay={0.2} />
-        <StatCard title="System Revenue (Today)" value="₹1.4M" subValue="15.2% profit margin" icon={Activity} color="245, 158, 11" delay={0.3} />
-        <StatCard title="Pending Tickets" value="24" subValue="4 high priority" icon={ShieldCheck} color="239, 68, 68" delay={0.4} />
+      {/* KPI Cards Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
+        <div className="glass-panel" style={{ padding: '1.25rem' }}>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Total Enterprise Revenue</p>
+          <h2 style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--success)', marginTop: '0.25rem' }}>₹{metrics?.revenue?.total || 0}</h2>
+        </div>
+        <div className="glass-panel" style={{ padding: '1.25rem' }}>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Total Registered Stores</p>
+          <h2 style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--accent-color)', marginTop: '0.25rem' }}>{metrics?.users?.shops || 0}</h2>
+        </div>
+        <div className="glass-panel" style={{ padding: '1.25rem' }}>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Master Workshops</p>
+          <h2 style={{ fontSize: '1.8rem', fontWeight: 700, color: '#38bdf8', marginTop: '0.25rem' }}>{metrics?.users?.masters || 0}</h2>
+        </div>
+        <div className="glass-panel" style={{ padding: '1.25rem' }}>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Active Tailors & Fleet</p>
+          <h2 style={{ fontSize: '1.8rem', fontWeight: 700, color: '#a855f7', marginTop: '0.25rem' }}>{(metrics?.users?.tailors || 0) + (metrics?.users?.deliveryBoys || 0)}</h2>
+        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
         
-        {/* Network Growth Preview (MLM) */}
-        <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.5 }}
-          className="glass-panel" 
-          style={{ padding: '1.5rem' }}
-        >
-          <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem' }}>Network Growth (10-Level Tree)</h3>
-          
+        {/* Network Ecosystem Health */}
+        <div className="glass-panel" style={{ padding: '1.5rem' }}>
+          <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Activity size={20} color="var(--accent-color)" /> Order Operations Pipeline
+          </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {[
-              { level: 1, users: 450, income: '₹45,000', percentage: 100 },
-              { level: 2, users: 1200, income: '₹84,000', percentage: 70 },
-              { level: 3, users: 2450, income: '₹122,500', percentage: 40 },
-              { level: 4, users: 4149, income: '₹207,450', percentage: 20 },
-            ].map((lvl, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ width: '60px', fontWeight: 600, color: 'var(--text-secondary)' }}>Level {lvl.level}</div>
-                <div style={{ flex: 1, background: 'var(--bg-primary)', height: '12px', borderRadius: '6px', overflow: 'hidden' }}>
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${lvl.percentage}%` }}
-                    transition={{ delay: 0.8 + (i * 0.1), duration: 0.5 }}
-                    style={{ height: '100%', background: 'var(--accent-color)' }} 
-                  />
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.85rem 1rem', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-sm)' }}>
+              <span>Total Orders Processed:</span>
+              <strong style={{ color: 'var(--accent-color)' }}>{metrics?.orders?.total || 0}</strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.85rem 1rem', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-sm)' }}>
+              <span>Orders Placed Today:</span>
+              <strong style={{ color: 'var(--warning)' }}>{metrics?.orders?.today || 0}</strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.85rem 1rem', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-sm)' }}>
+              <span>Active Orders Pending:</span>
+              <strong style={{ color: '#38bdf8' }}>{metrics?.orders?.pending || 0}</strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.85rem 1rem', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-sm)' }}>
+              <span>Completed & Closed:</span>
+              <strong style={{ color: 'var(--success)' }}>{metrics?.orders?.completed || 0}</strong>
+            </div>
+          </div>
+        </div>
+
+        {/* Dynamic Price Master Catalogue Overview */}
+        <div className="glass-panel" style={{ padding: '1.5rem' }}>
+          <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Tag size={20} color="var(--accent-color)" /> Price Master Matrix ({prices.length})
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', maxHeight: '320px', overflowY: 'auto' }}>
+            {prices.slice(0, 8).map((price) => (
+              <div key={price._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.65rem 0.85rem', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}>
+                <div>
+                  <strong>{price.garmentType}</strong> • {price.alterationType}
                 </div>
-                <div style={{ width: '80px', textAlign: 'right', fontWeight: 600 }}>{lvl.income}</div>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <span style={{ color: 'var(--success)', fontWeight: 600 }}>₹{price.normalPrice}</span>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>(Urgent: ₹{price.urgentPrice})</span>
+                </div>
               </div>
             ))}
-            <button style={{ marginTop: '1rem', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}>
-              View Full Tree
-            </button>
           </div>
-        </motion.div>
+        </div>
 
-        {/* Global Wallet View */}
-        <motion.div 
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.6 }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-             <h3 style={{ fontSize: '1.25rem' }}>Global Financials</h3>
-          </div>
-          <WalletModule />
-        </motion.div>
       </div>
-      
+
     </motion.div>
   );
 };

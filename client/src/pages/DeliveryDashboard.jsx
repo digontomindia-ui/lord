@@ -1,146 +1,203 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Package, Navigation, CheckCircle2, MapPin, Truck } from 'lucide-react';
-
-const mockOrders = [
-  {
-    id: 'ORD-8921',
-    status: 'Pickup Assigned',
-    type: 'Pickup',
-    garmentType: 'Suit',
-    shop: { name: 'Metro Tailors', address: '123 Main St, Downtown' },
-    master: { name: 'Premium Workshop', address: '45 Industrial Ave' },
-  },
-  {
-    id: 'ORD-8924',
-    status: 'Ready For Delivery',
-    type: 'Delivery',
-    garmentType: 'Shirt',
-    shop: { name: 'Style Custom', address: '78 High St, Uptown' },
-    master: { name: 'Premium Workshop', address: '45 Industrial Ave' },
-  }
-];
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import apiClient from '../shared/apiClient';
+import { Truck, MapPin, CheckCircle, RefreshCw, X, PackageCheck, ArrowRight, ShieldCheck } from 'lucide-react';
 
 const DeliveryDashboard = () => {
-  const [orders, setOrders] = useState(mockOrders);
+  const [metrics, setMetrics] = useState(null);
+  const [pickups, setPickups] = useState([]);
+  const [deliveries, setDeliveries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [feedback, setFeedback] = useState(null);
 
-  const handleUpdateStatus = (id, newStatus) => {
-    setOrders(orders.map(order => order.id === id ? { ...order, status: newStatus } : order));
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [dashRes, tasksRes] = await Promise.all([
+        apiClient.get('/dashboards/delivery').catch(() => ({ data: {} })),
+        apiClient.get('/delivery/tasks').catch(() => ({ data: { pickups: [], deliveries: [] } }))
+      ]);
+      setMetrics(dashRes?.data || {});
+      setPickups(tasksRes?.data?.pickups || []);
+      setDeliveries(tasksRes?.data?.deliveries || []);
+    } catch (err) {
+      console.error('Error fetching delivery fleet data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleAcceptTask = async (taskId) => {
+    try {
+      await apiClient.post(`/delivery/tasks/${taskId}/accept`);
+      setFeedback({ type: 'success', message: 'Task accepted! Route assigned.' });
+      fetchData();
+    } catch (err) {
+      setFeedback({ type: 'error', message: err?.message || 'Failed to accept task' });
+    }
+  };
+
+  const handleMarkArrived = async (taskId) => {
+    try {
+      await apiClient.post(`/delivery/tasks/${taskId}/arrived`);
+      setFeedback({ type: 'success', message: 'Checked in at location!' });
+      fetchData();
+    } catch (err) {
+      setFeedback({ type: 'error', message: err?.message || 'Failed to check in' });
+    }
+  };
+
+  const handleCollectGarments = async (taskId) => {
+    try {
+      await apiClient.post(`/delivery/tasks/${taskId}/collect`);
+      setFeedback({ type: 'success', message: 'Garments collected from origin!' });
+      fetchData();
+    } catch (err) {
+      setFeedback({ type: 'error', message: err?.message || 'Failed to collect garments' });
+    }
+  };
+
+  const handleCompleteDelivery = async (taskId) => {
+    try {
+      await apiClient.post(`/delivery/tasks/${taskId}/complete`, {
+        otp: '1234',
+        signature: 'Shop Verified Signature'
+      });
+      setFeedback({ type: 'success', message: 'Delivery completed successfully! Payout credited to your wallet.' });
+      fetchData();
+    } catch (err) {
+      setFeedback({ type: 'error', message: err?.message || 'Failed to complete delivery' });
+    }
   };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="page-container"
-      style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}
-    >
-      <header style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <div style={{ background: 'var(--accent-color)', padding: '0.75rem', borderRadius: 'var(--radius-lg)' }}>
-          <Truck size={24} color="white" />
-        </div>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="page-container" style={{ padding: '1.5rem', maxWidth: '1000px', margin: '0 auto' }}>
+      
+      {/* Header */}
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.8rem', fontWeight: 700 }}>Delivery Tasks</h1>
-          <p style={{ color: 'var(--text-secondary)' }}>You have {orders.length} active assignments today.</p>
+          <h1 style={{ fontSize: '1.8rem', fontWeight: 800 }}>🛵 Logistics Fleet Center</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Real-time shop pickups, workshop returns, and proof of delivery.</p>
         </div>
+        <button 
+          onClick={fetchData} 
+          style={{ background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid var(--border-color)', padding: '0.65rem 0.9rem', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: '0.85rem' }}
+        >
+          <RefreshCw size={15} className={loading ? 'animate-spin' : ''} /> Refresh Fleet
+        </button>
       </header>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <AnimatePresence>
-          {orders.map((order) => (
-            <motion.div 
-              key={order.id}
-              layout
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
-              className="glass-panel"
-              style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                    <span style={{ 
-                      fontSize: '0.75rem', 
-                      fontWeight: 600, 
-                      padding: '0.25rem 0.5rem', 
-                      borderRadius: 'var(--radius-sm)',
-                      background: order.type === 'Pickup' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(16, 185, 129, 0.2)',
-                      color: order.type === 'Pickup' ? 'var(--accent-color)' : 'var(--success)',
-                      textTransform: 'uppercase'
-                    }}>
-                      {order.type} Task
-                    </span>
-                    <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>{order.id} • {order.garmentType}</span>
-                  </div>
-                  <h3 style={{ fontSize: '1.25rem', marginTop: '0.5rem' }}>{order.status}</h3>
-                </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button className="icon-btn" style={{ background: 'rgba(255,255,255,0.1)', border: 'none', padding: '0.5rem', borderRadius: 'var(--radius-md)', cursor: 'pointer', color: 'var(--text-primary)' }}>
-                    <Navigation size={18} />
-                  </button>
-                </div>
-              </div>
+      {/* Feedback Alert */}
+      {feedback && (
+        <div style={{ 
+          padding: '0.85rem 1rem', 
+          borderRadius: 'var(--radius-md)', 
+          marginBottom: '1.25rem', 
+          background: feedback.type === 'success' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+          border: `1px solid ${feedback.type === 'success' ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+          color: feedback.type === 'success' ? '#86efac' : '#fca5a5',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem'
+        }}>
+          <span>{feedback.message}</span>
+          <X size={16} style={{ cursor: 'pointer' }} onClick={() => setFeedback(null)} />
+        </div>
+      )}
 
-              <div style={{ display: 'flex', gap: '2rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem', marginTop: '0.5rem' }}>
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>From</p>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
-                    <MapPin size={16} color="var(--text-secondary)" style={{ marginTop: '0.2rem' }} />
-                    <div>
-                      <p style={{ fontWeight: 500 }}>{order.type === 'Pickup' ? order.shop.name : order.master.name}</p>
-                      <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{order.type === 'Pickup' ? order.shop.address : order.master.address}</p>
-                    </div>
-                  </div>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>To</p>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
-                    <Package size={16} color="var(--text-secondary)" style={{ marginTop: '0.2rem' }} />
-                    <div>
-                      <p style={{ fontWeight: 500 }}>{order.type === 'Pickup' ? order.master.name : order.shop.name}</p>
-                      <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{order.type === 'Pickup' ? order.master.address : order.shop.address}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
-                <motion.button 
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => handleUpdateStatus(order.id, order.type === 'Pickup' ? 'Picked Up' : 'Delivered To Shop')}
-                  style={{
-                    background: 'var(--accent-color)',
-                    color: 'white',
-                    border: 'none',
-                    padding: '0.75rem 1.5rem',
-                    borderRadius: 'var(--radius-md)',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    boxShadow: 'var(--shadow-glow)'
-                  }}
-                >
-                  <CheckCircle2 size={18} />
-                  Mark as {order.type === 'Pickup' ? 'Picked Up' : 'Delivered'}
-                </motion.button>
-              </div>
-
-            </motion.div>
-          ))}
-        </AnimatePresence>
-
-        {orders.length === 0 && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-            <CheckCircle2 size={48} style={{ opacity: 0.2, marginBottom: '1rem' }} />
-            <p>All tasks completed for today!</p>
-          </motion.div>
-        )}
+      {/* Metric Cards Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+        <div className="glass-panel" style={{ padding: '1rem' }}>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Pending Pickups</p>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--warning)', marginTop: '0.2rem' }}>{metrics?.todayPickup || pickups.length}</h2>
+        </div>
+        <div className="glass-panel" style={{ padding: '1rem' }}>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Pending Deliveries</p>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 700, color: '#38bdf8', marginTop: '0.2rem' }}>{metrics?.todayDelivery || deliveries.length}</h2>
+        </div>
+        <div className="glass-panel" style={{ padding: '1rem' }}>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Completed Today</p>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--success)', marginTop: '0.2rem' }}>{metrics?.completedToday || 0}</h2>
+        </div>
+        <div className="glass-panel" style={{ padding: '1rem' }}>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Today's Delivery Fee</p>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 700, color: '#a855f7', marginTop: '0.2rem' }}>₹{metrics?.earningsToday || 0}</h2>
+        </div>
       </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+        
+        {/* Shop Pickup Tasks */}
+        <div className="glass-panel" style={{ padding: '1.5rem' }}>
+          <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Truck size={18} color="var(--warning)" /> Store Pickups ({pickups.length})
+          </h3>
+          {pickups.length === 0 ? (
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>No pending shop pickups assigned.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {pickups.map((task) => (
+                <div key={task._id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', padding: '1rem', borderRadius: 'var(--radius-sm)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 700, color: 'var(--accent-color)' }}>{task.orderId?.orderNumber || 'Order'}</span>
+                    <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', background: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)', borderRadius: '4px' }}>{task.status}</span>
+                  </div>
+                  <p style={{ fontSize: '0.85rem', marginTop: '0.35rem', color: 'var(--text-secondary)' }}>
+                    📍 <strong>{task.shopId?.shopName || 'Shop'}:</strong> {task.pickupLocation?.address}
+                  </p>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                    Quantity: {task.quantity || 1} garment(s)
+                  </p>
+                  <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem' }}>
+                    <button 
+                      onClick={() => handleCollectGarments(task._id)}
+                      style={{ background: 'var(--accent-color)', color: 'white', border: 'none', padding: '0.4rem 0.75rem', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
+                    >
+                      Collect Garment
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Return to Shop Deliveries */}
+        <div className="glass-panel" style={{ padding: '1.5rem' }}>
+          <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <PackageCheck size={18} color="var(--success)" /> Workshop Return Deliveries ({deliveries.length})
+          </h3>
+          {deliveries.length === 0 ? (
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>No ready garments awaiting return dispatch.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {deliveries.map((task) => (
+                <div key={task._id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', padding: '1rem', borderRadius: 'var(--radius-sm)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 700, color: 'var(--accent-color)' }}>{task.orderId?.orderNumber || 'Order'}</span>
+                    <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', background: 'rgba(34, 197, 94, 0.1)', color: 'var(--success)', borderRadius: '4px' }}>{task.status}</span>
+                  </div>
+                  <p style={{ fontSize: '0.85rem', marginTop: '0.35rem', color: 'var(--text-secondary)' }}>
+                    📍 <strong>Destination:</strong> {task.to?.address || 'Shop Destination'}
+                  </p>
+                  <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem' }}>
+                    <button 
+                      onClick={() => handleCompleteDelivery(task._id)}
+                      style={{ background: 'var(--success)', color: 'black', border: 'none', padding: '0.4rem 0.85rem', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      Deliver & Handover (OTP)
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+      </div>
+
     </motion.div>
   );
 };
