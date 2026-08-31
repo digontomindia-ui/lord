@@ -10,7 +10,7 @@ import { logAudit } from '../../services/auditService.js';
 // @access  Private (SUPER_ADMIN)
 export const getUsers = async (req, res) => {
   try {
-    const { role, status, search, page = 1, limit = 20 } = req.query;
+    const { role, status, search, page = 1, limit = 50 } = req.query;
     const query = {};
 
     if (role) query.role = role.toUpperCase();
@@ -44,6 +44,113 @@ export const getUsers = async (req, res) => {
   }
 };
 
+// @desc    Get all pending partner registration requests
+// @route   GET /api/v1/admin/users/pending or /api/admin/users/pending
+// @access  Private (SUPER_ADMIN)
+export const getPendingUsers = async (req, res) => {
+  try {
+    const pendingUsers = await User.find({ status: 'PENDING_APPROVAL' })
+      .select('-passwordHash')
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      data: pendingUsers
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Approve partner registration request
+// @route   PATCH /api/v1/admin/users/:id/approve or /api/admin/users/:id/approve
+// @access  Private (SUPER_ADMIN)
+export const approveUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User account not found' });
+
+    user.status = 'ACTIVE';
+    await user.save();
+
+    // Activate corresponding domain profile
+    if (user.role === 'SHOP') {
+      await Shop.updateOne({ userId: user._id }, { $set: { status: 'ACTIVE' } });
+    } else if (user.role === 'MASTER') {
+      await Master.updateOne({ userId: user._id }, { $set: { status: 'ACTIVE' } });
+    } else if (user.role === 'TAILOR') {
+      await Tailor.updateOne({ userId: user._id }, { $set: { status: 'ACTIVE' } });
+    } else if (user.role === 'DELIVERY_BOY') {
+      await DeliveryBoy.updateOne({ userId: user._id }, { $set: { status: 'ACTIVE' } });
+    }
+
+    try {
+      await logAudit({
+        userId: req.user._id,
+        role: req.user.role,
+        action: 'USER_APPROVED',
+        module: 'USERS',
+        entityType: 'User',
+        entityId: user._id,
+        req
+      });
+    } catch (aErr) {}
+
+    res.json({
+      success: true,
+      message: `Partner account for ${user.name} (${user.role}) has been APPROVED and activated!`,
+      data: user
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Reject / Suspend user registration request
+// @route   PATCH /api/v1/admin/users/:id/reject or /api/admin/users/:id/reject
+// @access  Private (SUPER_ADMIN)
+export const rejectUser = async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User account not found' });
+
+    user.status = 'INACTIVE';
+    await user.save();
+
+    if (user.role === 'SHOP') {
+      await Shop.updateOne({ userId: user._id }, { $set: { status: 'INACTIVE' } });
+    } else if (user.role === 'MASTER') {
+      await Master.updateOne({ userId: user._id }, { $set: { status: 'INACTIVE' } });
+    } else if (user.role === 'TAILOR') {
+      await Tailor.updateOne({ userId: user._id }, { $set: { status: 'INACTIVE' } });
+    } else if (user.role === 'DELIVERY_BOY') {
+      await DeliveryBoy.updateOne({ userId: user._id }, { $set: { status: 'INACTIVE' } });
+    }
+
+    try {
+      await logAudit({
+        userId: req.user._id,
+        role: req.user.role,
+        action: 'USER_REJECTED',
+        module: 'USERS',
+        entityType: 'User',
+        entityId: user._id,
+        newData: { reason },
+        req
+      });
+    } catch (aErr) {}
+
+    res.json({
+      success: true,
+      message: `Partner account for ${user.name} was rejected.`,
+      data: user
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // @desc    Get user by ID
 // @route   GET /api/v1/admin/users/:id
 // @access  Private (SUPER_ADMIN)
@@ -63,7 +170,7 @@ export const getUserById = async (req, res) => {
 export const updateUserStatus = async (req, res) => {
   try {
     const { status, reason } = req.body;
-    if (!['ACTIVE', 'SUSPENDED', 'INACTIVE', 'BLOCKED'].includes(status)) {
+    if (!['ACTIVE', 'PENDING_APPROVAL', 'SUSPENDED', 'INACTIVE', 'BLOCKED'].includes(status)) {
       return res.status(400).json({ success: false, message: 'Invalid status' });
     }
 

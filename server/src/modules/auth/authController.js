@@ -70,8 +70,19 @@ export const login = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Invalid credentials. Incorrect password.' });
     }
 
-    if (user.status === 'SUSPENDED' || user.status === 'BLOCKED' || user.status === 'suspended') {
-      return res.status(403).json({ success: false, message: 'Your account is suspended or blocked. Please contact support.' });
+    // Admin Approval Check: Block login if account is pending approval
+    if (user.role !== 'SUPER_ADMIN' && (user.status === 'PENDING_APPROVAL' || user.status === 'PENDING' || user.status === 'UNAPPROVED')) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Your account is pending Super Admin approval. Please wait for approval before logging in.' 
+      });
+    }
+
+    if (user.status === 'SUSPENDED' || user.status === 'BLOCKED' || user.status === 'INACTIVE' || user.status === 'suspended') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Your account has been deactivated or suspended. Please contact Super Admin.' 
+      });
     }
 
     // Update last login timestamp
@@ -120,7 +131,7 @@ export const login = async (req, res) => {
   }
 };
 
-// @desc    Role-Based Self-Service Registration
+// @desc    Role-Based Self-Service Registration (Pending Super Admin Approval)
 // @route   POST /api/v1/auth/register or /api/auth/register
 // @access  Public
 export const register = async (req, res) => {
@@ -160,11 +171,11 @@ export const register = async (req, res) => {
       email: cleanEmail,
       passwordHash,
       role: assignedRole,
-      status: 'ACTIVE',
+      status: 'PENDING_APPROVAL',
       referralCode
     });
 
-    // Automatically create domain profile documents
+    // Create domain profile documents in PENDING_APPROVAL status
     if (assignedRole === 'SHOP') {
       await Shop.create({
         userId: user._id,
@@ -173,7 +184,7 @@ export const register = async (req, res) => {
         ownerName: name,
         mobile: cleanMobile,
         address: address || { line1: 'Main Store Address', city: 'City', state: 'State', pinCode: '000000' },
-        status: 'ACTIVE'
+        status: 'PENDING_APPROVAL'
       });
     } else if (assignedRole === 'MASTER') {
       await Master.create({
@@ -183,7 +194,7 @@ export const register = async (req, res) => {
         experience: 10,
         specialization: specialization || ['SUIT', 'SHIRT', 'PANT'],
         mobile: cleanMobile,
-        status: 'ACTIVE'
+        status: 'PENDING_APPROVAL'
       });
     } else if (assignedRole === 'TAILOR') {
       await Tailor.create({
@@ -193,7 +204,7 @@ export const register = async (req, res) => {
         mobile: cleanMobile,
         experience: 5,
         specialization: specialization || ['SHIRT', 'PANT'],
-        status: 'ACTIVE'
+        status: 'PENDING_APPROVAL'
       });
     } else if (assignedRole === 'DELIVERY_BOY') {
       await DeliveryBoy.create({
@@ -201,30 +212,36 @@ export const register = async (req, res) => {
         deliveryBoyCode: `DLV-${randomCode}`,
         name,
         mobile: cleanMobile,
-        status: 'ACTIVE'
+        status: 'PENDING_APPROVAL'
       });
     }
 
     // Initialize 6-Bucket Wallet
     await getOrCreateWallet(user._id);
 
-    const tokens = generateTokens(user._id);
+    try {
+      await logAudit({
+        userId: user._id,
+        role: user.role,
+        action: 'USER_REGISTERED',
+        module: 'AUTH',
+        entityType: 'User',
+        entityId: user._id,
+        req
+      });
+    } catch (aErr) {}
 
     res.status(201).json({
       success: true,
-      message: 'Account registered successfully',
+      pendingApproval: true,
+      message: 'Registration submitted successfully! Your account is pending Super Admin approval. You will be able to log in once approved.',
       data: {
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-        user: {
-          _id: user._id,
-          name: user.name,
-          mobile: user.mobile,
-          email: user.email,
-          role: user.role,
-          status: user.status,
-          referralCode: user.referralCode
-        }
+        _id: user._id,
+        name: user.name,
+        mobile: user.mobile,
+        email: user.email,
+        role: user.role,
+        status: 'PENDING_APPROVAL'
       }
     });
   } catch (error) {
@@ -245,8 +262,8 @@ export const refreshToken = async (req, res) => {
 
     const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET || 'fallback_refresh_secret');
     const user = await User.findById(decoded.id);
-    if (!user || user.status === 'SUSPENDED' || user.status === 'BLOCKED') {
-      return res.status(401).json({ success: false, message: 'Invalid or expired session' });
+    if (!user || user.status !== 'ACTIVE') {
+      return res.status(401).json({ success: false, message: 'Account is not active or session expired' });
     }
 
     const tokens = generateTokens(user._id);

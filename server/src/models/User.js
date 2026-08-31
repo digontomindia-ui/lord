@@ -10,9 +10,10 @@ const normalizeRole = (val) => {
 };
 
 const normalizeStatus = (val) => {
-  if (!val) return 'ACTIVE';
+  if (!val) return 'PENDING_APPROVAL';
   const str = String(val).toUpperCase();
-  if (['ACTIVE', 'INACTIVE', 'SUSPENDED', 'BLOCKED'].includes(str)) return str;
+  if (['ACTIVE', 'PENDING_APPROVAL', 'INACTIVE', 'SUSPENDED', 'BLOCKED'].includes(str)) return str;
+  if (str === 'PENDING' || str === 'UNAPPROVED') return 'PENDING_APPROVAL';
   return 'ACTIVE';
 };
 
@@ -31,7 +32,7 @@ const userSchema = new mongoose.Schema({
   status: { 
     type: String, 
     set: normalizeStatus,
-    default: 'ACTIVE',
+    default: 'PENDING_APPROVAL',
     index: true 
   },
   mobileVerified: { type: Boolean, default: false },

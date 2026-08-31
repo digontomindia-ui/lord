@@ -2,7 +2,8 @@ import apiClient from '../shared/apiClient';
 
 // 1. AUTH & USER SERVICE
 export const authService = {
-  login: (mobile, password) => apiClient.post('/auth/login', { mobile, password }),
+  login: (identifier, password) => apiClient.post('/auth/login', { identifier, password }),
+  register: (data) => apiClient.post('/auth/register', data),
   refresh: (refreshToken) => apiClient.post('/auth/refresh', { refreshToken }),
   getMe: () => apiClient.get('/auth/me'),
   updateProfile: (data) => apiClient.patch('/profile', data),
@@ -87,10 +88,10 @@ export const referralService = {
 // 9. SUPER ADMIN SERVICE
 export const adminService = {
   getDashboardMetrics: () => apiClient.get('/dashboards/admin'),
-  getShops: () => apiClient.get('/admin/shops'),
-  getMasters: () => apiClient.get('/admin/masters'),
-  getTailors: () => apiClient.get('/admin/tailors'),
-  getDeliveryBoys: () => apiClient.get('/admin/delivery-boys'),
+  getPendingUsers: () => apiClient.get('/admin/users/pending'),
+  approveUser: (userId) => apiClient.patch(`/admin/users/${userId}/approve`),
+  rejectUser: (userId, reason) => apiClient.patch(`/admin/users/${userId}/reject`, { reason }),
+  getUsers: (params) => apiClient.get('/admin/users', { params }),
   getPrices: () => apiClient.get('/prices'),
   savePrice: (data) => apiClient.post('/admin/prices', data),
   getAuditLogs: (params) => apiClient.get('/admin/audit-logs', { params }),

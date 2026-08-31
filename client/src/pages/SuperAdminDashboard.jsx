@@ -5,7 +5,8 @@ import StatusBadge from '../components/ui/StatusBadge';
 import { 
   TrendingUp, Clock, RefreshCw, Download, AlertTriangle, 
   CheckCircle2, ChevronRight, Layers, DollarSign, Store, 
-  Users, Activity, Tag, ShieldCheck, Crown, Scissors, Shirt, Truck, Package 
+  Users, Activity, Tag, ShieldCheck, Crown, Scissors, Shirt, Truck, Package, 
+  UserCheck, UserX, Check, X, AlertCircle 
 } from 'lucide-react';
 
 const WORKFLOW_NODES = [
@@ -24,24 +25,28 @@ export const SuperAdminDashboard = () => {
   const [orders, setOrders] = useState([]);
   const [prices, setPrices] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
+  const [pendingUsers, setPendingUsers] = useState([]);
   const [timeRange, setTimeRange] = useState('30D');
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [actionFeedback, setActionFeedback] = useState(null);
 
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const [dashRes, ordersRes, priceRes, auditRes] = await Promise.all([
+      const [dashRes, ordersRes, priceRes, auditRes, pendingRes] = await Promise.all([
         apiClient.get('/dashboards/admin').catch(() => ({ data: {} })),
         orderService.getOrders().catch(() => ({ data: [] })),
         adminService.getPrices().catch(() => ({ data: [] })),
-        adminService.getAuditLogs({ limit: 6 }).catch(() => ({ data: [] }))
+        adminService.getAuditLogs({ limit: 8 }).catch(() => ({ data: [] })),
+        adminService.getPendingUsers().catch(() => ({ data: [] }))
       ]);
 
       setMetrics(dashRes?.data || {});
       setOrders(ordersRes?.data || []);
       setPrices(priceRes?.data || []);
       setAuditLogs(auditRes?.data || []);
+      setPendingUsers(pendingRes?.data || []);
     } catch (err) {
       console.error('Error fetching admin dashboard data:', err);
     } finally {
@@ -52,6 +57,26 @@ export const SuperAdminDashboard = () => {
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  const handleApprovePartner = async (userId, name) => {
+    try {
+      await adminService.approveUser(userId);
+      setActionFeedback({ type: 'success', message: `Partner account for ${name} APPROVED and activated!` });
+      fetchDashboardData();
+    } catch (err) {
+      setActionFeedback({ type: 'error', message: err?.message || 'Failed to approve partner' });
+    }
+  };
+
+  const handleRejectPartner = async (userId, name) => {
+    try {
+      await adminService.rejectUser(userId, 'Rejected by Super Admin');
+      setActionFeedback({ type: 'success', message: `Registration for ${name} rejected.` });
+      fetchDashboardData();
+    } catch (err) {
+      setActionFeedback({ type: 'error', message: err?.message || 'Failed to reject partner' });
+    }
+  };
 
   // Compute Pipeline Stage Counts from Real Orders
   const getStageCount = (key) => {
@@ -89,7 +114,7 @@ export const SuperAdminDashboard = () => {
             </span>
           </h1>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-            Real-time atelier operations, financial settlements, and capacity pipeline
+            Real-time enterprise atelier operations, partner governance, and financial ledger
           </div>
         </div>
 
@@ -146,6 +171,24 @@ export const SuperAdminDashboard = () => {
           </button>
         </div>
       </div>
+
+      {/* Action Feedback Banner */}
+      {actionFeedback && (
+        <div style={{
+          padding: '0.75rem 1rem',
+          borderRadius: '8px',
+          background: actionFeedback.type === 'success' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+          border: `1px solid ${actionFeedback.type === 'success' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+          color: actionFeedback.type === 'success' ? '#86efac' : '#fca5a5',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          fontSize: '0.8125rem'
+        }}>
+          <span>{actionFeedback.message}</span>
+          <X size={16} style={{ cursor: 'pointer' }} onClick={() => setActionFeedback(null)} />
+        </div>
+      )}
 
       {/* 2. Compact KPI Row with Luxury Gold Styling */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
@@ -215,30 +258,119 @@ export const SuperAdminDashboard = () => {
             <span style={{ fontSize: '0.68rem', color: '#f3e5ab', fontWeight: 700 }}>Active</span>
           </div>
           <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#ffffff', marginTop: '0.3rem', letterSpacing: '-0.02em' }}>
-            {metrics?.users?.shops || 2}
+            {metrics?.users?.shops || 0}
           </div>
           <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
             Retail partner POS
           </div>
         </div>
 
-        {/* KPI 6: Tailor Fleet */}
+        {/* KPI 6: Tailors & Fleet */}
         <div className="erp-card" style={{ padding: '0.9rem 1.1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#d4af37', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Tailors & Fleet</span>
             <span style={{ fontSize: '0.68rem', color: '#38bdf8', fontWeight: 700 }}>Online</span>
           </div>
           <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#ffffff', marginTop: '0.3rem', letterSpacing: '-0.02em' }}>
-            {(metrics?.users?.tailors || 4) + (metrics?.users?.deliveryBoys || 2)}
+            {(metrics?.users?.tailors || 0) + (metrics?.users?.deliveryBoys || 0)}
           </div>
           <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-            {metrics?.users?.tailors || 4} tailors • {metrics?.users?.deliveryBoys || 2} fleet
+            {metrics?.users?.tailors || 0} tailors • {metrics?.users?.deliveryBoys || 0} fleet
           </div>
         </div>
 
       </div>
 
-      {/* 3. Horizontal Gold Workflow Order Pipeline */}
+      {/* 3. PENDING PARTNER REGISTRATIONS APPROVAL CENTER */}
+      {pendingUsers.length > 0 && (
+        <div className="erp-card" style={{ padding: '1.1rem 1.25rem', border: '1px solid rgba(245, 158, 11, 0.4)', background: 'rgba(245, 158, 11, 0.03)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <UserCheck size={16} color="#f59e0b" />
+              <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#fde68a', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Pending Partner Approvals ({pendingUsers.length})
+              </span>
+            </div>
+            <span style={{ fontSize: '0.72rem', color: '#f59e0b' }}>
+              New applicants waiting for Super Admin authorization
+            </span>
+          </div>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table className="erp-table">
+              <thead>
+                <tr>
+                  <th>Applicant Name</th>
+                  <th>Requested Role</th>
+                  <th>Mobile Number</th>
+                  <th>Email</th>
+                  <th>Registered On</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pendingUsers.map((pUser) => (
+                  <tr key={pUser._id}>
+                    <td style={{ fontWeight: 700, color: '#ffffff' }}>{pUser.name}</td>
+                    <td>
+                      <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.45rem', borderRadius: '3px', background: 'rgba(212, 175, 55, 0.12)', border: '1px solid rgba(212, 175, 55, 0.3)', color: '#f3e5ab', fontWeight: 700 }}>
+                        {pUser.role}
+                      </span>
+                    </td>
+                    <td style={{ color: 'var(--text-secondary)' }}>{pUser.mobile}</td>
+                    <td style={{ color: 'var(--text-muted)' }}>{pUser.email || '—'}</td>
+                    <td style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+                      {new Date(pUser.createdAt).toLocaleDateString()}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '0.4rem' }}>
+                        <button
+                          onClick={() => handleApprovePartner(pUser._id, pUser.name)}
+                          style={{
+                            background: '#10b981',
+                            color: '#06281e',
+                            border: 'none',
+                            padding: '0.25rem 0.6rem',
+                            borderRadius: '4px',
+                            fontWeight: 700,
+                            fontSize: '0.72rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.25rem'
+                          }}
+                        >
+                          <Check size={13} /> Approve
+                        </button>
+                        <button
+                          onClick={() => handleRejectPartner(pUser._id, pUser.name)}
+                          style={{
+                            background: 'rgba(239, 68, 68, 0.15)',
+                            color: '#f87171',
+                            border: '1px solid rgba(239, 68, 68, 0.3)',
+                            padding: '0.25rem 0.6rem',
+                            borderRadius: '4px',
+                            fontWeight: 600,
+                            fontSize: '0.72rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.25rem'
+                          }}
+                        >
+                          <X size={13} /> Reject
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* 4. Horizontal Gold Workflow Order Pipeline */}
       <div className="erp-card" style={{ padding: '1.1rem 1.25rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -297,7 +429,7 @@ export const SuperAdminDashboard = () => {
         </div>
       </div>
 
-      {/* 4. Actionable Operations & Recent Activity Row */}
+      {/* 5. Actionable Operations & Recent Activity Row */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }} className="responsive-split">
         
         {/* Needs Attention */}
@@ -405,7 +537,7 @@ export const SuperAdminDashboard = () => {
 
       </div>
 
-      {/* 5. Recent Orders Real Enterprise Table */}
+      {/* 6. Recent Orders Real Enterprise Table */}
       <div className="erp-card" style={{ padding: '1.1rem 1.25rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem', flexWrap: 'wrap', gap: '0.5rem' }}>
           <div>
@@ -493,7 +625,7 @@ export const SuperAdminDashboard = () => {
         )}
       </div>
 
-      {/* 6. Dynamic Price Master Matrix Table */}
+      {/* 7. Dynamic Price Master Matrix Table */}
       <div className="erp-card" style={{ padding: '1.1rem 1.25rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
           <div>
