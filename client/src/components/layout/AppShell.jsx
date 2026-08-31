@@ -5,7 +5,7 @@ import {
   LayoutDashboard, ShoppingBag, Scissors, Truck, Users, 
   Wallet, Settings, LogOut, Bell, Menu, X, Tag, FileText, 
   Search, ChevronRight, ShieldCheck, Activity, Layers, 
-  AlertCircle, ChevronDown 
+  AlertCircle, ChevronDown, Crown, Store, Shirt 
 } from 'lucide-react';
 
 const NAVIGATION_SECTIONS = [
@@ -14,9 +14,9 @@ const NAVIGATION_SECTIONS = [
     roles: ['SUPER_ADMIN', 'SHOP', 'MASTER', 'TAILOR', 'DELIVERY_BOY'],
     items: [
       { label: 'Overview', path: '/admin', roles: ['SUPER_ADMIN'], icon: LayoutDashboard },
-      { label: 'Shop Hub', path: '/shop', roles: ['SHOP', 'SUPER_ADMIN'], icon: ShoppingBag },
+      { label: 'Shop Hub', path: '/shop', roles: ['SHOP', 'SUPER_ADMIN'], icon: Store },
       { label: 'Master Workshop', path: '/master', roles: ['MASTER', 'SUPER_ADMIN'], icon: Scissors },
-      { label: 'Tailor Workspace', path: '/tailor', roles: ['TAILOR', 'SUPER_ADMIN'], icon: Scissors },
+      { label: 'Tailor Workspace', path: '/tailor', roles: ['TAILOR', 'SUPER_ADMIN'], icon: Shirt },
       { label: 'Logistics Fleet', path: '/delivery', roles: ['DELIVERY_BOY', 'SUPER_ADMIN'], icon: Truck },
     ]
   },
@@ -72,7 +72,7 @@ export const AppShell = ({ children }) => {
       <aside style={{
         width: sidebarCollapsed ? '64px' : '230px',
         background: 'var(--bg-surface)',
-        borderRight: '1px solid var(--border-subtle)',
+        borderRight: '1px solid var(--border-gold)',
         display: 'flex',
         flexDirection: 'column',
         position: 'sticky',
@@ -83,32 +83,36 @@ export const AppShell = ({ children }) => {
         flexShrink: 0
       }} className="desktop-sidebar">
         
-        {/* Brand Header */}
+        {/* Brand Header with 3D Gold Logo */}
         <div style={{
-          padding: sidebarCollapsed ? '0.75rem 0.5rem' : '1rem 1.25rem',
-          borderBottom: '1px solid var(--border-subtle)',
+          padding: sidebarCollapsed ? '0.75rem 0.5rem' : '0.85rem 1.1rem',
+          borderBottom: '1px solid var(--border-gold)',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: sidebarCollapsed ? 'center' : 'space-between',
-          height: '56px'
+          justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
+          gap: '0.65rem',
+          height: '62px',
+          background: 'rgba(0, 0, 0, 0.25)'
         }}>
-          {!sidebarCollapsed ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              <div style={{ width: '28px', height: '28px', borderRadius: 'var(--radius-sm)', background: 'var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 800, fontSize: '0.9rem' }}>
-                L
-              </div>
-              <div>
-                <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em', display: 'block', lineHeight: 1.1 }}>
-                  LORD'S BESPOKE
-                </span>
-                <span style={{ fontSize: '0.625rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                  Enterprise ERP
-                </span>
-              </div>
-            </div>
-          ) : (
-            <div style={{ width: '28px', height: '28px', borderRadius: 'var(--radius-sm)', background: 'var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 800 }}>
-              L
+          <img 
+            src="/logo.png" 
+            alt="Lord's Logo" 
+            style={{ 
+              width: sidebarCollapsed ? '32px' : '36px', 
+              height: sidebarCollapsed ? '32px' : '36px', 
+              objectFit: 'contain',
+              filter: 'drop-shadow(0 0 8px rgba(212, 175, 55, 0.35))',
+              flexShrink: 0
+            }} 
+          />
+          {!sidebarCollapsed && (
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: 800, color: '#f8fafc', letterSpacing: '0.02em', lineHeight: 1.1 }}>
+                LORD'S BESPOKE
+              </span>
+              <span style={{ fontSize: '0.625rem', color: '#d4af37', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                Alteration ERP
+              </span>
             </div>
           )}
         </div>
@@ -122,11 +126,11 @@ export const AppShell = ({ children }) => {
             return (
               <div key={section.title}>
                 {!sidebarCollapsed && (
-                  <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0 0.6rem 0.4rem 0.6rem' }}>
+                  <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#8492a6', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0 0.6rem 0.4rem 0.6rem' }}>
                     {section.title}
                   </div>
                 )}
-                <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                   {visibleItems.map((item) => {
                     const IconComp = item.icon;
                     const isActive = location.pathname === item.path;
@@ -144,13 +148,14 @@ export const AppShell = ({ children }) => {
                           fontSize: '0.8125rem',
                           fontWeight: isActive ? 600 : 500,
                           textDecoration: 'none',
-                          color: isActive ? '#ffffff' : 'var(--text-secondary)',
-                          background: isActive ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
-                          border: `1px solid ${isActive ? 'rgba(99, 102, 241, 0.3)' : 'transparent'}`,
+                          color: isActive ? '#f3e5ab' : 'var(--text-secondary)',
+                          background: isActive ? 'rgba(212, 175, 55, 0.12)' : 'transparent',
+                          border: `1px solid ${isActive ? 'rgba(212, 175, 55, 0.35)' : 'transparent'}`,
+                          boxShadow: isActive ? '0 0 12px rgba(212, 175, 55, 0.12)' : 'none',
                           transition: 'all 0.15s ease'
                         }}
                       >
-                        <IconComp size={16} color={isActive ? 'var(--accent-light)' : 'var(--text-muted)'} />
+                        <IconComp size={16} color={isActive ? '#d4af37' : 'var(--text-muted)'} />
                         {!sidebarCollapsed && (
                           <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span>{item.label}</span>
@@ -173,28 +178,28 @@ export const AppShell = ({ children }) => {
         {/* Sidebar Footer User Info */}
         <div style={{
           padding: '0.75rem',
-          borderTop: '1px solid var(--border-subtle)',
+          borderTop: '1px solid var(--border-gold)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: sidebarCollapsed ? 'center' : 'space-between',
-          background: 'rgba(0, 0, 0, 0.15)'
+          background: 'rgba(0, 0, 0, 0.3)'
         }}>
           {!sidebarCollapsed ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden' }}>
-              <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(255, 255, 255, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, flexShrink: 0 }}>
+              <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.15)', border: '1px solid rgba(212, 175, 55, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, color: '#d4af37', flexShrink: 0 }}>
                 {user.name?.[0] || 'U'}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
                   {user.name}
                 </span>
-                <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                <span style={{ fontSize: '0.65rem', color: '#d4af37', fontWeight: 600 }}>
                   {user.role}
                 </span>
               </div>
             </div>
           ) : (
-            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(255, 255, 255, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}>
+            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.15)', border: '1px solid rgba(212, 175, 55, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, color: '#d4af37' }}>
               {user.name?.[0] || 'U'}
             </div>
           )}
@@ -216,9 +221,9 @@ export const AppShell = ({ children }) => {
         
         {/* Topbar */}
         <header style={{
-          height: '56px',
+          height: '62px',
           background: 'var(--bg-surface)',
-          borderBottom: '1px solid var(--border-subtle)',
+          borderBottom: '1px solid var(--border-gold)',
           padding: '0 1.5rem',
           display: 'flex',
           justifyContent: 'space-between',
@@ -239,13 +244,13 @@ export const AppShell = ({ children }) => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8125rem' }}>
               <span style={{ color: 'var(--text-muted)' }}>Lord's ERP</span>
               <span style={{ color: 'var(--text-muted)' }}>/</span>
-              <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{getPageBreadcrumb()}</span>
+              <span style={{ color: '#d4af37', fontWeight: 600 }}>{getPageBreadcrumb()}</span>
             </div>
           </div>
 
           {/* Global Search Bar */}
           <div style={{ display: 'flex', alignItems: 'center', width: '320px', position: 'relative' }} className="desktop-search-bar">
-            <Search size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '10px' }} />
+            <Search size={14} color="#d4af37" style={{ position: 'absolute', left: '10px' }} />
             <input
               type="text"
               value={searchQuery}
@@ -253,52 +258,52 @@ export const AppShell = ({ children }) => {
               placeholder="Search orders, clients, tickets... (Ctrl+K)"
               style={{
                 width: '100%',
-                padding: '0.35rem 0.65rem 0.35rem 2rem',
+                padding: '0.4rem 0.65rem 0.4rem 2rem',
                 fontSize: '0.78rem',
-                background: 'rgba(9, 13, 22, 0.6)',
-                border: '1px solid var(--border-subtle)',
+                background: 'rgba(9, 10, 13, 0.7)',
+                border: '1px solid var(--border-gold)',
                 borderRadius: 'var(--radius-sm)',
                 color: 'var(--text-primary)'
               }}
             />
           </div>
 
-          {/* Actions & Role Badge */}
+          {/* Actions & Gold Role Badge */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <span style={{
               fontSize: '0.7rem',
               fontWeight: 700,
-              padding: '0.2rem 0.5rem',
+              padding: '0.25rem 0.6rem',
               borderRadius: 'var(--radius-xs)',
-              background: 'rgba(99, 102, 241, 0.1)',
-              color: 'var(--accent-light)',
-              border: '1px solid rgba(99, 102, 241, 0.25)',
-              letterSpacing: '0.02em'
+              background: 'rgba(212, 175, 55, 0.12)',
+              color: '#f3e5ab',
+              border: '1px solid rgba(212, 175, 55, 0.35)',
+              letterSpacing: '0.04em'
             }}>
               {role}
             </span>
 
             <button
               onClick={() => alert('All systems operational (0 unread notifications)')}
-              style={{ background: 'transparent', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', padding: '0.35rem', borderRadius: 'var(--radius-sm)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ background: 'transparent', border: '1px solid var(--border-gold)', color: 'var(--text-secondary)', padding: '0.4rem', borderRadius: 'var(--radius-sm)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               title="Notifications"
             >
-              <Bell size={15} />
+              <Bell size={15} color="#d4af37" />
             </button>
 
             <button
               onClick={handleLogout}
               style={{
                 background: 'rgba(239, 68, 68, 0.08)',
-                border: '1px solid rgba(239, 68, 68, 0.2)',
+                border: '1px solid rgba(239, 68, 68, 0.25)',
                 color: '#f87171',
-                padding: '0.35rem 0.65rem',
+                padding: '0.35rem 0.7rem',
                 borderRadius: 'var(--radius-sm)',
                 fontSize: '0.75rem',
                 fontWeight: 600,
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.3rem',
+                gap: '0.35rem',
                 cursor: 'pointer'
               }}
             >
@@ -317,11 +322,14 @@ export const AppShell = ({ children }) => {
       {/* Mobile Navigation Drawer */}
       {mobileDrawerOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex' }}>
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.7)' }} onClick={() => setMobileDrawerOpen(false)} />
-          <div style={{ position: 'relative', width: '260px', background: 'var(--bg-surface)', height: '100%', zIndex: 101, display: 'flex', flexDirection: 'column', padding: '1rem' }}>
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.8)' }} onClick={() => setMobileDrawerOpen(false)} />
+          <div style={{ position: 'relative', width: '260px', background: 'var(--bg-surface)', height: '100%', zIndex: 101, display: 'flex', flexDirection: 'column', padding: '1rem', borderRight: '1px solid var(--border-gold)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <span style={{ fontWeight: 800, fontSize: '1rem', color: 'white' }}>LORD'S ERP</span>
-              <X size={18} style={{ cursor: 'pointer' }} onClick={() => setMobileDrawerOpen(false)} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <img src="/logo.png" alt="Logo" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
+                <span style={{ fontWeight: 800, fontSize: '0.95rem', color: '#f8fafc' }}>LORD'S ERP</span>
+              </div>
+              <X size={18} style={{ cursor: 'pointer', color: '#cbd5e1' }} onClick={() => setMobileDrawerOpen(false)} />
             </div>
 
             <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -342,11 +350,12 @@ export const AppShell = ({ children }) => {
                       textDecoration: 'none',
                       fontSize: '0.875rem',
                       fontWeight: 600,
-                      background: isActive ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
-                      color: isActive ? 'var(--accent-light)' : 'var(--text-secondary)'
+                      background: isActive ? 'rgba(212, 175, 55, 0.12)' : 'transparent',
+                      color: isActive ? '#f3e5ab' : 'var(--text-secondary)',
+                      border: `1px solid ${isActive ? 'rgba(212, 175, 55, 0.35)' : 'transparent'}`
                     }}
                   >
-                    <IconComp size={18} />
+                    <IconComp size={18} color={isActive ? '#d4af37' : '#8492a6'} />
                     <span>{item.label}</span>
                   </Link>
                 );
