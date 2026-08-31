@@ -1,14 +1,16 @@
 import express from 'express';
-import { getOrderStats, getRevenueReport } from './reportsController.js';
+import { getOrderStats, getRevenueReport, getShopReport } from './reportsController.js';
 import { requireAuth } from '../../middleware/auth.js';
-import { requireRole } from '../../middleware/rbac.js';
 import { scopeToTenant } from '../../middleware/tenantScope.js';
+import { requireRole } from '../../middleware/rbac.js';
 
 const router = express.Router();
 
 router.use(requireAuth);
+router.use(scopeToTenant);
 
-router.get('/orders', scopeToTenant, getOrderStats);
-router.get('/revenue', requireRole(['SUPER_ADMIN']), getRevenueReport);
+router.get('/orders', getOrderStats);
+router.get('/revenue', getRevenueReport);
+router.get('/shop', requireRole(['SUPER_ADMIN']), getShopReport);
 
 export default router;

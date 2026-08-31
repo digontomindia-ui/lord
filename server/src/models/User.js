@@ -1,17 +1,29 @@
 import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  mobile: { type: String, required: true, unique: true },
-  email: { type: String },
-  passwordHash: { type: String, required: true },
   role: { 
     type: String, 
     enum: ['SUPER_ADMIN', 'SHOP', 'MASTER', 'TAILOR', 'DELIVERY_BOY'], 
-    required: true 
+    required: true,
+    index: true 
   },
-  status: { type: String, enum: ['active', 'suspended'], default: 'active' },
+  name: { type: String, required: true, trim: true },
+  mobile: { type: String, required: true, unique: true, trim: true },
+  email: { type: String, lowercase: true, trim: true, sparse: true },
+  passwordHash: { type: String, required: true },
+  profilePhoto: { type: String },
+  status: { 
+    type: String, 
+    enum: ['ACTIVE', 'INACTIVE', 'SUSPENDED', 'BLOCKED'], 
+    default: 'ACTIVE',
+    index: true 
+  },
+  mobileVerified: { type: Boolean, default: false },
+  emailVerified: { type: Boolean, default: false },
+  lastLoginAt: { type: Date },
+  permissions: [{ type: String }],
   
+  // Specific embedded profile info
   profile: {
     photo: String,
     address: String,
@@ -19,36 +31,19 @@ const userSchema = new mongoose.Schema({
     state: String,
     pin: String,
     gstNumber: String,
+    workshopName: String,
+    experience: Number,
+    specialization: [String],
     vehicleType: String,
     vehicleNumber: String,
-    licenseNumber: String,
-    experience: String,
-    specialization: [String],
-    workshopName: String
+    licenseNumber: String
   },
-
+  
   referralCode: { type: String, unique: true, sparse: true },
   uplineId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   walletId: { type: mongoose.Schema.Types.ObjectId, ref: 'Wallet' },
-
 }, { timestamps: true });
 
-// Prevent deletion if the user has a downline in the referral tree
-userSchema.pre(['deleteOne', 'findOneAndDelete', 'remove'], { document: true, query: true }, async function(next) {
-  const userId = this._id || this.getQuery()._id;
-  if (!userId) return next();
+userSchema.index({ role: 1, status: 1 });
 
-  // We need to use mongoose.model to avoid circular dependency
-  const User = mongoose.model('User');
-  const hasDownline = await User.exists({ uplineId: userId });
-  
-  if (hasDownline) {
-    const error = new Error('Cannot delete user: This user is an upline for other associates in the referral tree. Suspend them instead.');
-    error.status = 400;
-    return next(error);
-  }
-  
-  next();
-});
-
-export default mongoose.model('User', userSchema);
+export default mongoose.models.User || mongoose.model('User', userSchema);

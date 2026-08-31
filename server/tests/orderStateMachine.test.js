@@ -8,11 +8,11 @@ let mongoServer;
 beforeAll(async () => {
   mongoServer = await MongoMemoryServer.create();
   await mongoose.connect(mongoServer.getUri());
-});
+}, 120000);
 
 afterAll(async () => {
   await mongoose.disconnect();
-  await mongoServer.stop();
+  if (mongoServer) await mongoServer.stop();
 });
 
 afterEach(async () => {
@@ -22,8 +22,8 @@ afterEach(async () => {
 describe('Order State Machine & Race Conditions', () => {
   
   test('assertTransition rejects out-of-order calls', () => {
-    // Attempting to jump from CREATED to WORK_STARTED (bypassing pickup)
-    expect(() => assertTransition('CREATED', 'WORK_STARTED', 'SHOP'))
+    // Attempting to jump from ORDER_CREATED to WORK_STARTED (bypassing pickup)
+    expect(() => assertTransition('ORDER_CREATED', 'WORK_STARTED', 'SHOP'))
       .toThrow('Illegal state transition');
       
     // Attempting invalid role
@@ -31,11 +31,11 @@ describe('Order State Machine & Race Conditions', () => {
       .toThrow('Role SHOP is not permitted');
       
     // Legal transition
-    expect(assertTransition('CREATED', 'PICKUP_REQUESTED', 'SHOP')).toBe(true);
+    expect(assertTransition('ORDER_CREATED', 'PICKUP_REQUESTED', 'SHOP')).toBe(true);
+    expect(assertTransition('PICKUP_REQUESTED', 'PICKUP_ASSIGNED', 'SUPER_ADMIN')).toBe(true);
   });
 
   test('Race condition fix: concurrent modifications on the same order', async () => {
-    // Setup a dummy order
     const shopId = new mongoose.Types.ObjectId();
     const customerId = new mongoose.Types.ObjectId();
     
@@ -43,33 +43,31 @@ describe('Order State Machine & Race Conditions', () => {
       orderNumber: 'TEST-123',
       shopId,
       customerId,
-      garmentType: 'Suit',
+      items: [{ garmentType: 'SUIT', quantity: 1, alterations: {} }],
       deliveryDate: new Date(),
       status: 'WORK_STARTED'
     });
 
-    // Simulate Process A trying to transition to WORK_IN_PROGRESS
     const processA_CurrentStatus = order.status;
     const processA_Updates = { $set: { status: 'WORK_IN_PROGRESS' } };
 
-    // Simulate Process B jumping in and modifying it first
+    // Process B updates first
     await Order.findOneAndUpdate(
       { _id: order._id, status: 'WORK_STARTED' },
       { $set: { status: 'WORK_COMPLETED' } }
     );
 
-    // Process A now executes its atomic findOneAndUpdate using the stale precondition
+    // Process A executes with stale precondition
     const processA_Result = await Order.findOneAndUpdate(
       { _id: order._id, status: processA_CurrentStatus },
       processA_Updates,
       { new: true }
     );
 
-    // The race condition fix (the precondition { status: processA_CurrentStatus }) 
-    // ensures Process A's update fails and returns null!
+    // The atomic precondition ensures Process A's stale update is prevented
     expect(processA_Result).toBeNull();
     
     const finalOrder = await Order.findById(order._id);
-    expect(finalOrder.status).toBe('WORK_COMPLETED'); // Process B won
+    expect(finalOrder.status).toBe('WORK_COMPLETED');
   });
 });

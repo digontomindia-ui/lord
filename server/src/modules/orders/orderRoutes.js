@@ -1,20 +1,28 @@
 import express from 'express';
-import { createOrder, getOrders, transitionOrder } from './orderController.js';
+import { 
+  createOrder, 
+  getOrders, 
+  getOrderById, 
+  getOrderTimeline, 
+  requestPickup, 
+  cancelOrder, 
+  transitionOrder 
+} from './orderController.js';
 import { requireAuth } from '../../middleware/auth.js';
-import { requireRole } from '../../middleware/rbac.js';
 import { scopeToTenant } from '../../middleware/tenantScope.js';
 
 const router = express.Router();
 
-// Apply auth and tenant scoping to all order routes
 router.use(requireAuth);
 router.use(scopeToTenant);
 
-router.route('/')
-  .get(getOrders)
-  .post(requireRole(['SHOP', 'SUPER_ADMIN']), createOrder);
-
-// The universal transition endpoint that goes through the State Machine guard
+router.post('/', createOrder);
+router.get('/', getOrders);
+router.get('/:id', getOrderById);
+router.get('/:id/timeline', getOrderTimeline);
+router.post('/:id/pickup-request', requestPickup);
+router.post('/:id/cancel', cancelOrder);
 router.patch('/:id/transition', transitionOrder);
+router.post('/:id/transition', transitionOrder);
 
 export default router;

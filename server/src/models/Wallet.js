@@ -2,23 +2,16 @@ import mongoose from 'mongoose';
 
 const walletSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
-  
-  // The 4 Buckets
-  mainWallet: { type: Number, default: 0 },
-  growthWallet: { type: Number, default: 0 },
-  todaysWorkWallet: { type: Number, default: 0 },
-  rewardWallet: { type: Number, default: 0 },
-  
-  // The immutable Ledger
-  transactions: [{
-    type: { type: String, enum: ['CREDIT', 'DEBIT'], required: true },
-    bucket: { type: String, enum: ['mainWallet', 'growthWallet', 'todaysWorkWallet', 'rewardWallet'], required: true },
-    amount: { type: Number, required: true },
-    balanceAfter: { type: Number, required: true },
-    reason: { type: String, required: true },
-    orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' },
-    timestamp: { type: Date, default: Date.now }
-  }]
+  balances: {
+    main: { type: Number, default: 0 },
+    growth: { type: Number, default: 0 },
+    todaysWork: { type: Number, default: 0 },
+    reward: { type: Number, default: 0 },
+    commission: { type: Number, default: 0 },
+    bonus: { type: Number, default: 0 }
+  },
+  currency: { type: String, default: 'INR' },
+  status: { type: String, enum: ['ACTIVE', 'LOCKED'], default: 'ACTIVE' }
 }, { timestamps: true });
 
-export default mongoose.model('Wallet', walletSchema);
+export default mongoose.models.Wallet || mongoose.model('Wallet', walletSchema);
