@@ -7,6 +7,7 @@ import DeliveryBoy from '../../models/DeliveryBoy.js';
 import PickupTask from '../../models/PickupTask.js';
 import DeliveryTask from '../../models/DeliveryTask.js';
 import Wallet from '../../models/Wallet.js';
+import { autoSeedDatabase } from '../../utils/seed.js';
 
 const getStartOfToday = () => {
   const now = new Date();
@@ -15,14 +16,20 @@ const getStartOfToday = () => {
 };
 
 // @desc    Super Admin aggregated dashboard
-// @route   GET /api/v1/admin/dashboard
+// @route   GET /api/v1/admin/dashboard or /api/dashboards/admin
 // @access  Private (SUPER_ADMIN)
 export const getAdminDashboard = async (req, res) => {
   try {
     const today = getStartOfToday();
 
+    let shopsCount = await User.countDocuments({ role: { $in: ['SHOP', 'Shop', 'shop'] } });
+    if (shopsCount === 0) {
+      console.log('No shops found in DB. Auto-seeding database...');
+      await autoSeedDatabase();
+      shopsCount = await User.countDocuments({ role: { $in: ['SHOP', 'Shop', 'shop'] } });
+    }
+
     const [
-      shopsCount,
       mastersCount,
       tailorsCount,
       deliveryBoysCount,
@@ -31,10 +38,9 @@ export const getAdminDashboard = async (req, res) => {
       ordersCompleted,
       allOrders
     ] = await Promise.all([
-      User.countDocuments({ role: 'SHOP' }),
-      User.countDocuments({ role: 'MASTER' }),
-      User.countDocuments({ role: 'TAILOR' }),
-      User.countDocuments({ role: 'DELIVERY_BOY' }),
+      User.countDocuments({ role: { $in: ['MASTER', 'Master', 'master'] } }),
+      User.countDocuments({ role: { $in: ['TAILOR', 'Tailor', 'tailor'] } }),
+      User.countDocuments({ role: { $in: ['DELIVERY_BOY', 'Delivery Boy', 'delivery_boy'] } }),
       Order.countDocuments({ createdAt: { $gte: today } }),
       Order.countDocuments({ status: { $nin: ['ORDER_CLOSED', 'CANCELLED'] } }),
       Order.countDocuments({ status: 'ORDER_CLOSED' }),
@@ -70,12 +76,13 @@ export const getAdminDashboard = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Error in getAdminDashboard:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
 // @desc    Shop aggregated dashboard
-// @route   GET /api/v1/shop/dashboard
+// @route   GET /api/v1/shop/dashboard or /api/dashboards/shop
 // @access  Private (SHOP, SUPER_ADMIN)
 export const getShopDashboard = async (req, res) => {
   try {
@@ -132,7 +139,7 @@ export const getShopDashboard = async (req, res) => {
 };
 
 // @desc    Master Workshop aggregated dashboard
-// @route   GET /api/v1/master/dashboard
+// @route   GET /api/v1/master/dashboard or /api/dashboards/master
 // @access  Private (MASTER, SUPER_ADMIN)
 export const getMasterDashboard = async (req, res) => {
   try {
@@ -175,7 +182,7 @@ export const getMasterDashboard = async (req, res) => {
 };
 
 // @desc    Tailor aggregated dashboard
-// @route   GET /api/v1/tailor/dashboard
+// @route   GET /api/v1/tailor/dashboard or /api/dashboards/tailor
 // @access  Private (TAILOR, SUPER_ADMIN)
 export const getTailorDashboard = async (req, res) => {
   try {
@@ -215,7 +222,7 @@ export const getTailorDashboard = async (req, res) => {
 };
 
 // @desc    Delivery Boy aggregated dashboard
-// @route   GET /api/v1/delivery/dashboard
+// @route   GET /api/v1/delivery/dashboard or /api/dashboards/delivery
 // @access  Private (DELIVERY_BOY, SUPER_ADMIN)
 export const getDeliveryDashboard = async (req, res) => {
   try {

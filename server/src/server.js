@@ -37,7 +37,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Health Check Endpoint
-app.get(['/api/health', '/api/v1/health'], (req, res) => {
+app.get(['/api/health', '/api/v1/health', '/health'], (req, res) => {
   res.json({ 
     status: 'OK', 
     version: '2.0.0 (PRD v1.1 Complete)',
@@ -46,45 +46,40 @@ app.get(['/api/health', '/api/v1/health'], (req, res) => {
   });
 });
 
-// REST API v1 Routes (PRD Standard Specification)
-app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/profile', authRoutes);
-app.use('/api/v1/admin/users', userRoutes);
-app.use('/api/v1/customers', customerRoutes);
-app.use('/api/v1/shop/customers', customerRoutes);
-app.use('/api/v1/orders', orderRoutes);
-app.use('/api/v1/shop/orders', orderRoutes);
-app.use('/api/v1/workshop', workshopRoutes);
-app.use('/api/v1/master', workshopRoutes);
-app.use('/api/v1/tailor', tailorRoutes);
-app.use('/api/v1/delivery', deliveryRoutes);
-app.use('/api/v1/prices', priceMasterRoutes);
-app.use('/api/v1/admin/prices', priceMasterRoutes);
-app.use('/api/v1/invoices', invoiceRoutes);
-app.use('/api/v1/shop/invoices', invoiceRoutes);
-app.use('/api/v1/payments', paymentRoutes);
-app.use('/api/v1/wallet', walletRoutes);
-app.use('/api/v1/associate', referralRoutes);
-app.use('/api/v1/notifications', notificationRoutes);
-app.use('/api/v1/support', ticketRoutes);
-app.use('/api/v1/dashboards', dashboardRoutes);
-app.use('/api/v1/reports', reportsRoutes);
-app.use('/api/v1/settings', settingsRoutes);
-app.use('/api/v1/admin/settings', settingsRoutes);
-app.use('/api/v1/admin/audit-logs', auditRoutes);
+// Register all route modules under both /api/v1 and /api
+const registerRoutes = (prefix) => {
+  app.use(`${prefix}/auth`, authRoutes);
+  app.use(`${prefix}/profile`, authRoutes);
+  app.use(`${prefix}/admin/users`, userRoutes);
+  app.use(`${prefix}/customers`, customerRoutes);
+  app.use(`${prefix}/shop/customers`, customerRoutes);
+  app.use(`${prefix}/orders`, orderRoutes);
+  app.use(`${prefix}/shop/orders`, orderRoutes);
+  app.use(`${prefix}/workshop`, workshopRoutes);
+  app.use(`${prefix}/master`, workshopRoutes);
+  app.use(`${prefix}/tailor`, tailorRoutes);
+  app.use(`${prefix}/delivery`, deliveryRoutes);
+  app.use(`${prefix}/prices`, priceMasterRoutes);
+  app.use(`${prefix}/price-master`, priceMasterRoutes);
+  app.use(`${prefix}/admin/prices`, priceMasterRoutes);
+  app.use(`${prefix}/invoices`, invoiceRoutes);
+  app.use(`${prefix}/shop/invoices`, invoiceRoutes);
+  app.use(`${prefix}/payments`, paymentRoutes);
+  app.use(`${prefix}/wallet`, walletRoutes);
+  app.use(`${prefix}/associate`, referralRoutes);
+  app.use(`${prefix}/referral`, referralRoutes);
+  app.use(`${prefix}/notifications`, notificationRoutes);
+  app.use(`${prefix}/support`, ticketRoutes);
+  app.use(`${prefix}/tickets`, ticketRoutes);
+  app.use(`${prefix}/dashboards`, dashboardRoutes);
+  app.use(`${prefix}/reports`, reportsRoutes);
+  app.use(`${prefix}/settings`, settingsRoutes);
+  app.use(`${prefix}/admin/settings`, settingsRoutes);
+  app.use(`${prefix}/admin/audit-logs`, auditRoutes);
+};
 
-// Backward-Compatible API Routes (Ensuring existing Client UI components work seamlessly)
-app.use('/api/auth', authRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/customers', customerRoutes);
-app.use('/api/wallet', walletRoutes);
-app.use('/api/price-master', priceMasterRoutes);
-app.use('/api/referral', referralRoutes);
-app.use('/api/reports', reportsRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/tickets', ticketRoutes);
-app.use('/api/invoices', invoiceRoutes);
-app.use('/api/payments', paymentRoutes);
+registerRoutes('/api/v1');
+registerRoutes('/api');
 
 // Global Error Handling Middleware
 app.use((err, req, res, next) => {
