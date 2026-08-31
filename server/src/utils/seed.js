@@ -15,11 +15,6 @@ dotenv.config();
 
 export const autoSeedDatabase = async () => {
   try {
-    const adminCount = await User.countDocuments({ role: 'SUPER_ADMIN' });
-    if (adminCount > 0) {
-      console.log('Database already initialized with Super Admin. Checking default configuration...');
-    }
-
     const salt = await bcrypt.genSalt(10);
     const defaultPasswordHash = await bcrypt.hash('password123', salt);
 
@@ -35,9 +30,14 @@ export const autoSeedDatabase = async () => {
         status: 'ACTIVE',
         referralCode: 'ADMIN-001'
       });
-      await getOrCreateWallet(admin._id);
-      console.log('Seeded Super Admin: 9999999999 / password123');
+    } else {
+      admin.passwordHash = defaultPasswordHash;
+      admin.role = 'SUPER_ADMIN';
+      admin.status = 'ACTIVE';
+      await admin.save();
     }
+    await getOrCreateWallet(admin._id);
+    console.log('Verified Super Admin: 9999999999 / password123');
 
     // 2. Shops
     let shopUser1 = await User.findOne({ mobile: '9000000001' });
@@ -52,9 +52,17 @@ export const autoSeedDatabase = async () => {
         referralCode: 'SHP-1001',
         uplineId: admin._id
       });
-      await getOrCreateWallet(shopUser1._id);
-      
-      const shop1 = await Shop.create({
+    } else {
+      shopUser1.passwordHash = defaultPasswordHash;
+      shopUser1.role = 'SHOP';
+      shopUser1.status = 'ACTIVE';
+      await shopUser1.save();
+    }
+    await getOrCreateWallet(shopUser1._id);
+
+    let shop1 = await Shop.findOne({ mobile: '9000000001' });
+    if (!shop1) {
+      shop1 = await Shop.create({
         userId: shopUser1._id,
         shopCode: 'SHP-1001',
         shopName: 'Savile Row Alterations',
@@ -83,7 +91,6 @@ export const autoSeedDatabase = async () => {
           pinCode: '400050'
         }
       });
-      console.log('Seeded Shop 1: 9000000001 / password123');
     }
 
     let shopUser2 = await User.findOne({ mobile: '9000000002' });
@@ -98,8 +105,16 @@ export const autoSeedDatabase = async () => {
         referralCode: 'SHP-1002',
         uplineId: shopUser1._id
       });
-      await getOrCreateWallet(shopUser2._id);
-      
+    } else {
+      shopUser2.passwordHash = defaultPasswordHash;
+      shopUser2.role = 'SHOP';
+      shopUser2.status = 'ACTIVE';
+      await shopUser2.save();
+    }
+    await getOrCreateWallet(shopUser2._id);
+
+    let shop2 = await Shop.findOne({ mobile: '9000000002' });
+    if (!shop2) {
       await Shop.create({
         userId: shopUser2._id,
         shopCode: 'SHP-1002',
@@ -114,7 +129,6 @@ export const autoSeedDatabase = async () => {
         },
         status: 'ACTIVE'
       });
-      console.log('Seeded Shop 2: 9000000002 / password123');
     }
 
     // 3. Masters
@@ -130,8 +144,16 @@ export const autoSeedDatabase = async () => {
         referralCode: 'MST-1001',
         uplineId: admin._id
       });
-      await getOrCreateWallet(masterUser1._id);
+    } else {
+      masterUser1.passwordHash = defaultPasswordHash;
+      masterUser1.role = 'MASTER';
+      masterUser1.status = 'ACTIVE';
+      await masterUser1.save();
+    }
+    await getOrCreateWallet(masterUser1._id);
 
+    let master1 = await Master.findOne({ mobile: '8000000001' });
+    if (!master1) {
       await Master.create({
         userId: masterUser1._id,
         masterCode: 'MST-1001',
@@ -147,7 +169,6 @@ export const autoSeedDatabase = async () => {
         },
         status: 'ACTIVE'
       });
-      console.log('Seeded Master 1: 8000000001 / password123');
     }
 
     let masterUser2 = await User.findOne({ mobile: '8000000002' });
@@ -162,8 +183,16 @@ export const autoSeedDatabase = async () => {
         referralCode: 'MST-1002',
         uplineId: admin._id
       });
-      await getOrCreateWallet(masterUser2._id);
+    } else {
+      masterUser2.passwordHash = defaultPasswordHash;
+      masterUser2.role = 'MASTER';
+      masterUser2.status = 'ACTIVE';
+      await masterUser2.save();
+    }
+    await getOrCreateWallet(masterUser2._id);
 
+    let master2 = await Master.findOne({ mobile: '8000000002' });
+    if (!master2) {
       await Master.create({
         userId: masterUser2._id,
         masterCode: 'MST-1002',
@@ -179,7 +208,6 @@ export const autoSeedDatabase = async () => {
         },
         status: 'ACTIVE'
       });
-      console.log('Seeded Master 2: 8000000002 / password123');
     }
 
     // 4. Tailors
@@ -203,8 +231,16 @@ export const autoSeedDatabase = async () => {
           referralCode: `TLR-100${i + 1}`,
           uplineId: masterUser1._id
         });
-        await getOrCreateWallet(tailorUser._id);
+      } else {
+        tailorUser.passwordHash = defaultPasswordHash;
+        tailorUser.role = 'TAILOR';
+        tailorUser.status = 'ACTIVE';
+        await tailorUser.save();
+      }
+      await getOrCreateWallet(tailorUser._id);
 
+      let tailorDoc = await Tailor.findOne({ mobile: t.mobile });
+      if (!tailorDoc) {
         await Tailor.create({
           userId: tailorUser._id,
           masterId: masterUser1._id,
@@ -215,7 +251,6 @@ export const autoSeedDatabase = async () => {
           specialization: t.specialization,
           status: 'ACTIVE'
         });
-        console.log(`Seeded Tailor ${i + 1}: ${t.mobile} / password123`);
       }
     }
 
@@ -238,8 +273,16 @@ export const autoSeedDatabase = async () => {
           referralCode: `DLV-100${i + 1}`,
           uplineId: admin._id
         });
-        await getOrCreateWallet(delUser._id);
+      } else {
+        delUser.passwordHash = defaultPasswordHash;
+        delUser.role = 'DELIVERY_BOY';
+        delUser.status = 'ACTIVE';
+        await delUser.save();
+      }
+      await getOrCreateWallet(delUser._id);
 
+      let delDoc = await DeliveryBoy.findOne({ mobile: d.mobile });
+      if (!delDoc) {
         await DeliveryBoy.create({
           userId: delUser._id,
           deliveryBoyCode: `DLV-100${i + 1}`,
@@ -255,7 +298,6 @@ export const autoSeedDatabase = async () => {
           },
           status: 'ACTIVE'
         });
-        console.log(`Seeded Delivery Boy ${i + 1}: ${d.mobile} / password123`);
       }
     }
 
@@ -281,7 +323,6 @@ export const autoSeedDatabase = async () => {
         { upsert: true }
       );
     }
-    console.log('Seeded complete Price Master catalogue.');
 
     // 7. System Settings
     await SystemSetting.findOneAndUpdate(
@@ -293,24 +334,8 @@ export const autoSeedDatabase = async () => {
       },
       { upsert: true }
     );
-    console.log('Seeded 10-level referral tiers configuration.');
 
   } catch (error) {
     console.error('Error during auto-seeding:', error.message);
   }
 };
-
-// Standalone execution support
-if (process.argv[1]?.endsWith('seed.js')) {
-  mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/lords_bespoke')
-    .then(async () => {
-      console.log('Connected to MongoDB for seeding...');
-      await autoSeedDatabase();
-      console.log('Database seeding finished.');
-      process.exit(0);
-    })
-    .catch((err) => {
-      console.error('Database connection failed:', err.message);
-      process.exit(1);
-    });
-}

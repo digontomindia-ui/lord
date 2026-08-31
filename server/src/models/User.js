@@ -1,10 +1,26 @@
 import mongoose from 'mongoose';
 
+const normalizeRole = (val) => {
+  if (!val) return 'SHOP';
+  const str = String(val).toUpperCase().replace(/\s+/g, '_');
+  if (['SUPER_ADMIN', 'SHOP', 'MASTER', 'TAILOR', 'DELIVERY_BOY'].includes(str)) return str;
+  if (str === 'ADMIN' || str === 'SUPERADMIN') return 'SUPER_ADMIN';
+  if (str === 'DELIVERY' || str === 'DELIVERYBOY') return 'DELIVERY_BOY';
+  return 'SHOP';
+};
+
+const normalizeStatus = (val) => {
+  if (!val) return 'ACTIVE';
+  const str = String(val).toUpperCase();
+  if (['ACTIVE', 'INACTIVE', 'SUSPENDED', 'BLOCKED'].includes(str)) return str;
+  return 'ACTIVE';
+};
+
 const userSchema = new mongoose.Schema({
   role: { 
     type: String, 
-    enum: ['SUPER_ADMIN', 'SHOP', 'MASTER', 'TAILOR', 'DELIVERY_BOY'], 
-    required: true,
+    set: normalizeRole,
+    default: 'SHOP',
     index: true 
   },
   name: { type: String, required: true, trim: true },
@@ -14,7 +30,7 @@ const userSchema = new mongoose.Schema({
   profilePhoto: { type: String },
   status: { 
     type: String, 
-    enum: ['ACTIVE', 'INACTIVE', 'SUSPENDED', 'BLOCKED'], 
+    set: normalizeStatus,
     default: 'ACTIVE',
     index: true 
   },
@@ -23,7 +39,6 @@ const userSchema = new mongoose.Schema({
   lastLoginAt: { type: Date },
   permissions: [{ type: String }],
   
-  // Specific embedded profile info
   profile: {
     photo: String,
     address: String,
