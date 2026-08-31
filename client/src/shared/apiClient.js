@@ -1,12 +1,29 @@
 import axios from 'axios';
 
-const baseURL = import.meta.env.VITE_API_URL || '/api/v1';
+const getBaseUrl = () => {
+  // 1. Explicit env variable (if provided and not just default relative)
+  if (import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL !== '/api' && import.meta.env.VITE_API_URL !== '/api/v1') {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  // 2. In browser environment, check hostname for Coolify / production domains
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host.includes('72.62.192.34.sslip.io') || host.includes('l6yysocwp2ehbvzggvs9xdn1')) {
+      return 'http://x12ffct87by2qsgrpdpjp6vt.72.62.192.34.sslip.io/api';
+    }
+  }
+
+  // 3. Default relative fallback
+  return import.meta.env.VITE_API_URL || '/api';
+};
 
 const apiClient = axios.create({
-  baseURL,
+  baseURL: getBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 15000,
 });
 
 // Request interceptor to attach JWT token
@@ -31,7 +48,7 @@ apiClient.interceptors.response.use(
       const refreshToken = localStorage.getItem('erp_refresh_token');
       if (refreshToken) {
         try {
-          const { data } = await axios.post(`${baseURL}/auth/refresh`, { refreshToken });
+          const { data } = await axios.post(`${getBaseUrl()}/auth/refresh`, { refreshToken });
           const newAccessToken = data.data.accessToken;
           localStorage.setItem('erp_access_token', newAccessToken);
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
