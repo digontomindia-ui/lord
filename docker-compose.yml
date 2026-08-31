@@ -3,22 +3,18 @@ version: '3.8'
 services:
   mongodb:
     image: mongo:latest
-    container_name: lords_erp_mongo
-    ports:
-      - "27017:27017"
     volumes:
       - mongo_data:/data/db
     networks:
       - lords_network
     restart: unless-stopped
+    expose:
+      - "27017"
 
   server:
     build:
       context: ./server
       dockerfile: Dockerfile
-    container_name: lords_erp_server
-    ports:
-      - "5000:5000"
     environment:
       - PORT=5000
       - NODE_ENV=production
@@ -30,6 +26,8 @@ services:
     networks:
       - lords_network
     restart: unless-stopped
+    expose:
+      - "5000"
 
   client:
     build:
@@ -37,9 +35,10 @@ services:
       dockerfile: Dockerfile
       args:
         - VITE_API_URL=/api
-    container_name: lords_erp_client
     ports:
       - "3000:80"
+    expose:
+      - "80"
     depends_on:
       - server
     networks:
