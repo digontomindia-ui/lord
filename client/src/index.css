@@ -1,50 +1,49 @@
 @import "tailwindcss";
 
 :root {
-  --bg-primary: #0b0f19;
-  --bg-secondary: #111827;
-  --bg-tertiary: #1f2937;
-  --bg-card: rgba(17, 24, 39, 0.92);
-  --bg-glass: rgba(255, 255, 255, 0.03);
+  /* Enterprise Dark Theme Tokens */
+  --bg-canvas: #090d16;
+  --bg-surface: #0f172a;
+  --bg-surface-raised: #1e293b;
+  --bg-surface-hover: #334155;
+  --bg-card: #0f172a;
   
-  --border-color: rgba(255, 255, 255, 0.12);
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --border-default: rgba(255, 255, 255, 0.12);
   --border-hover: rgba(255, 255, 255, 0.22);
   --border-accent: rgba(99, 102, 241, 0.5);
 
-  --accent-color: #6366f1;
+  --accent-primary: #6366f1;
   --accent-hover: #4f46e5;
   --accent-light: #818cf8;
-  --accent-glow: rgba(99, 102, 241, 0.35);
+  --accent-glow: rgba(99, 102, 241, 0.2);
 
-  --text-primary: #f9fafb;
-  --text-secondary: #9ca3af;
-  --text-muted: #6b7280;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
 
-  --success: #22c55e;
-  --success-bg: rgba(34, 197, 94, 0.15);
-  --success-border: rgba(34, 197, 94, 0.3);
+  --success: #10b981;
+  --success-bg: rgba(16, 185, 129, 0.1);
+  --success-border: rgba(16, 185, 129, 0.25);
 
   --warning: #f59e0b;
-  --warning-bg: rgba(245, 158, 11, 0.15);
-  --warning-border: rgba(245, 158, 11, 0.3);
+  --warning-bg: rgba(245, 158, 11, 0.1);
+  --warning-border: rgba(245, 158, 11, 0.25);
 
   --error: #ef4444;
-  --error-bg: rgba(239, 68, 68, 0.15);
-  --error-border: rgba(239, 68, 68, 0.3);
+  --error-bg: rgba(239, 68, 68, 0.1);
+  --error-border: rgba(239, 68, 68, 0.25);
 
-  --info: #38bdf8;
-  --info-bg: rgba(56, 189, 248, 0.15);
-  --info-border: rgba(56, 189, 248, 0.3);
+  --info: #0ea5e9;
+  --info-bg: rgba(14, 165, 233, 0.1);
+  --info-border: rgba(14, 165, 233, 0.25);
 
+  --radius-xs: 4px;
   --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
 
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
-  --shadow-glow: 0 0 20px -5px var(--accent-glow);
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.2);
 }
 
 * {
@@ -54,13 +53,55 @@
 }
 
 html, body, #root {
-  background-color: #0b0f19 !important;
-  color: #f9fafb !important;
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: var(--bg-canvas) !important;
+  color: var(--text-primary) !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
   width: 100%;
+}
+
+/* Crisp Enterprise Card */
+.erp-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  transition: border-color 0.15s ease;
+}
+
+.erp-card:hover {
+  border-color: var(--border-hover);
+}
+
+/* Compact Table Styling */
+.erp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.erp-table th {
+  text-align: left;
+  padding: 0.6rem 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(15, 23, 42, 0.6);
+  text-transform: uppercase;
+  font-size: 0.6875rem;
+  letter-spacing: 0.05em;
+}
+
+.erp-table td {
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.erp-table tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
 }
 
 /* Interactive Cursor Behavior */
@@ -81,38 +122,27 @@ input:disabled,
 select:disabled,
 .disabled {
   cursor: not-allowed !important;
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
 /* Form Inputs Defaults */
 input, select, textarea {
-  color: #ffffff !important;
+  color: #f8fafc !important;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
 }
 
-/* Glassmorphism Panel */
-.glass-panel {
-  background: var(--bg-card) !important;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.glass-panel:hover {
-  border-color: var(--border-hover);
-}
-
-.glass-panel-accent {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(17, 24, 39, 0.95) 100%) !important;
-  border: 1px solid var(--border-accent);
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent-primary);
 }
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -120,27 +150,18 @@ input, select, textarea {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.35);
-}
-
-/* Micro-interaction helper classes */
-.hover-lift {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.hover-lift:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  background: rgba(255, 255, 255, 0.3);
 }
 
 /* Mobile Touch Targets */
 @media (max-width: 768px) {
   button, 
   .touch-target {
-    min-height: 44px;
+    min-height: 40px;
   }
 }
