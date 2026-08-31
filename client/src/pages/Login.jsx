@@ -27,9 +27,9 @@ const WORKFLOW_STEPS = [
 export const Login = () => {
   const [authMode, setAuthMode] = useState('login'); // 'login' | 'register'
   
-  // Login Form Fields
-  const [identifier, setIdentifier] = useState('admin@loeds.com');
-  const [password, setPassword] = useState('Milan@721166');
+  // Login Form Fields (Clean empty state)
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
   
   // Register Form Fields
   const [regName, setRegName] = useState('');
@@ -399,7 +399,8 @@ export const Login = () => {
                       value={identifier}
                       onChange={(e) => setIdentifier(e.target.value)}
                       required
-                      placeholder="admin@loeds.com or 9999999999"
+                      placeholder="Enter email or mobile number"
+                      autoComplete="username"
                       style={{
                         width: '100%',
                         padding: '0.65rem 0.85rem 0.65rem 2.3rem',
@@ -426,7 +427,8 @@ export const Login = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                      placeholder="••••••••"
+                      placeholder="Enter your password"
+                      autoComplete="current-password"
                       style={{
                         width: '100%',
                         padding: '0.65rem 2.3rem 0.65rem 2.3rem',
