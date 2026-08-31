@@ -65,7 +65,19 @@ export const login = async (req, res) => {
         }
       }
     });
+// @desc    Seed default accounts (if not already seeded)
+// @route   POST /api/auth/seed
+// @access  Public
+export const seedAccounts = async (req, res) => {
+  try {
+    const { autoSeedDatabase } = await import('../../utils/seed.js');
+    await autoSeedDatabase();
+    res.json({ 
+      success: true, 
+      message: 'Demo accounts seeded successfully. You can now login with 9999999999 / password123' 
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error during login', error: error.message });
+    res.status(500).json({ success: false, message: 'Seeding failed', error: error.message });
   }
 };
+

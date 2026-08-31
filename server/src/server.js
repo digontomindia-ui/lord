@@ -58,11 +58,17 @@ app.use((err, req, res, next) => {
   });
 });
 
+import { autoSeedDatabase } from './utils/seed.js';
+
 // Database Connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/tailor_erp';
 mongoose.connect(MONGODB_URI)
-  .then(() => console.log('MongoDB Connected successfully to ERP Core'))
+  .then(async () => {
+    console.log('MongoDB Connected successfully to ERP Core');
+    await autoSeedDatabase();
+  })
   .catch(err => console.log('MongoDB connection error:', err));
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
