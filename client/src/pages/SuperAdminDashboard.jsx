@@ -6,7 +6,7 @@ import {
   TrendingUp, Clock, RefreshCw, Download, AlertTriangle, 
   CheckCircle2, ChevronRight, Layers, DollarSign, Store, 
   Users, Activity, Tag, ShieldCheck, Crown, Scissors, Shirt, Truck, Package, 
-  UserCheck, UserX, Check, X, AlertCircle 
+  UserCheck, UserX, Check, X, AlertCircle, PlusCircle, Edit, Trash2, ArrowRight 
 } from 'lucide-react';
 
 const WORKFLOW_NODES = [
@@ -20,6 +20,8 @@ const WORKFLOW_NODES = [
   { key: 'CLOSED', label: 'Closed', icon: Package }
 ];
 
+const GARMENT_TYPES = ['SHIRT', 'PANT', 'SUIT', 'BLAZER', 'SHERWANI', 'LADIES_WEAR', 'REPAIR'];
+
 export const SuperAdminDashboard = () => {
   const [metrics, setMetrics] = useState(null);
   const [orders, setOrders] = useState([]);
@@ -30,6 +32,18 @@ export const SuperAdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [actionFeedback, setActionFeedback] = useState(null);
+
+  // Price Master Modal State
+  const [priceModalOpen, setPriceModalOpen] = useState(false);
+  const [editingPriceId, setEditingPriceId] = useState(null);
+  const [garmentType, setGarmentType] = useState('SHIRT');
+  const [alterationType, setAlterationType] = useState('');
+  const [normalPrice, setNormalPrice] = useState(150);
+  const [urgentPrice, setUrgentPrice] = useState(225);
+  const [veryUrgentPrice, setVeryUrgentPrice] = useState(300);
+  const [vipPrice, setVipPrice] = useState(375);
+  const [festivalPrice, setFestivalPrice] = useState(250);
+  const [savingPrice, setSavingPrice] = useState(false);
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -78,6 +92,78 @@ export const SuperAdminDashboard = () => {
     }
   };
 
+  // Price Modal Handlers
+  const handleNormalPriceChange = (val) => {
+    const num = Number(val) || 0;
+    setNormalPrice(num);
+    setUrgentPrice(Math.round(num * 1.5));
+    setVeryUrgentPrice(Math.round(num * 2.0));
+    setVipPrice(Math.round(num * 2.5));
+    setFestivalPrice(Math.round(num * 1.75));
+  };
+
+  const openNewPriceModal = () => {
+    setEditingPriceId(null);
+    setGarmentType('SHIRT');
+    setAlterationType('');
+    handleNormalPriceChange(150);
+    setPriceModalOpen(true);
+  };
+
+  const openEditPriceModal = (p) => {
+    setEditingPriceId(p._id);
+    setGarmentType(p.garmentType);
+    setAlterationType(p.alterationType);
+    setNormalPrice(p.normalPrice);
+    setUrgentPrice(p.urgentPrice);
+    setVeryUrgentPrice(p.veryUrgentPrice);
+    setVipPrice(p.vipPrice);
+    setFestivalPrice(p.festivalPrice);
+    setPriceModalOpen(true);
+  };
+
+  const handleSavePrice = async (e) => {
+    e.preventDefault();
+    setSavingPrice(true);
+    try {
+      const payload = {
+        garmentType,
+        alterationType,
+        normalPrice: Number(normalPrice),
+        urgentPrice: Number(urgentPrice),
+        veryUrgentPrice: Number(veryUrgentPrice),
+        vipPrice: Number(vipPrice),
+        festivalPrice: Number(festivalPrice)
+      };
+
+      if (editingPriceId) {
+        await adminService.updatePrice(editingPriceId, payload);
+        setActionFeedback({ type: 'success', message: `Price rule for ${garmentType} - ${alterationType} updated successfully!` });
+      } else {
+        await adminService.savePrice(payload);
+        setActionFeedback({ type: 'success', message: `New price rule for ${garmentType} - ${alterationType} created successfully!` });
+      }
+
+      setPriceModalOpen(false);
+      fetchDashboardData();
+    } catch (err) {
+      setActionFeedback({ type: 'error', message: err?.message || 'Failed to save price rule' });
+    } finally {
+      setSavingPrice(false);
+    }
+  };
+
+  const handleDeletePrice = async (priceId, name) => {
+    if (!window.confirm(`Are you sure you want to delete price rule for "${name}"?`)) return;
+    try {
+      await adminService.deletePrice(priceId);
+      setActionFeedback({ type: 'success', message: `Price rule for "${name}" deleted.` });
+      fetchDashboardData();
+    } catch (err) {
+      setActionFeedback({ type: 'error', message: err?.message || 'Failed to delete price rule' });
+    }
+  };
+
   // Compute Pipeline Stage Counts from Real Orders
   const getStageCount = (key) => {
     if (key === 'CREATED') return orders.filter(o => o.status === 'ORDER_CREATED').length;
@@ -114,7 +200,7 @@ export const SuperAdminDashboard = () => {
             </span>
           </h1>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-            Real-time enterprise atelier operations, partner governance, and financial ledger
+            Real-time enterprise atelier operations, partner governance, and dynamic price master
           </div>
         </div>
 
@@ -625,22 +711,30 @@ export const SuperAdminDashboard = () => {
         )}
       </div>
 
-      {/* 7. Dynamic Price Master Matrix Table */}
+      {/* 7. DYNAMIC LIVE EDITABLE PRICE MASTER MATRIX TABLE */}
       <div className="erp-card" style={{ padding: '1.1rem 1.25rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem', flexWrap: 'wrap', gap: '0.5rem' }}>
           <div>
             <span style={{ fontSize: '0.8125rem', fontWeight: 800, color: '#d4af37', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Price Master Matrix ({prices.length} Configured)
+              Dynamic Price Master Matrix ({prices.length} Rules)
+            </span>
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginLeft: '0.5rem' }}>
+              Live configurable alteration rates
             </span>
           </div>
-          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-            Authoritative dynamic alteration tier rates
-          </span>
+          <button
+            onClick={openNewPriceModal}
+            className="btn-gold"
+            style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem' }}
+          >
+            <PlusCircle size={14} />
+            <span>Add Price Rule</span>
+          </button>
         </div>
 
         {prices.length === 0 ? (
-          <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
-            No price master catalogue items configured.
+          <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
+            No price rules configured. Click <strong>"Add Price Rule"</strong> to create one.
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
@@ -654,13 +748,13 @@ export const SuperAdminDashboard = () => {
                   <th>Very Urgent (2.0x)</th>
                   <th>VIP (2.5x)</th>
                   <th>Festival</th>
-                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {prices.slice(0, 8).map((p) => (
+                {prices.map((p) => (
                   <tr key={p._id}>
-                    <td style={{ fontWeight: 700 }}>{p.garmentType}</td>
+                    <td style={{ fontWeight: 700, color: '#ffffff' }}>{p.garmentType}</td>
                     <td style={{ color: 'var(--text-secondary)' }}>{p.alterationType}</td>
                     <td style={{ fontWeight: 700, color: '#10b981' }}>₹{p.normalPrice}</td>
                     <td style={{ color: '#f3e5ab' }}>₹{p.urgentPrice}</td>
@@ -668,9 +762,44 @@ export const SuperAdminDashboard = () => {
                     <td style={{ color: '#d4af37', fontWeight: 700 }}>₹{p.vipPrice}</td>
                     <td style={{ color: '#f59e0b' }}>₹{p.festivalPrice}</td>
                     <td>
-                      <span style={{ fontSize: '0.68rem', padding: '0.12rem 0.4rem', borderRadius: '3px', background: 'rgba(16, 185, 129, 0.12)', color: '#10b981', fontWeight: 600 }}>
-                        Active
-                      </span>
+                      <div style={{ display: 'flex', gap: '0.35rem' }}>
+                        <button
+                          onClick={() => openEditPriceModal(p)}
+                          title="Edit Rate"
+                          style={{
+                            background: 'rgba(212, 175, 55, 0.12)',
+                            border: '1px solid rgba(212, 175, 55, 0.3)',
+                            color: '#f3e5ab',
+                            padding: '0.2rem 0.45rem',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.2rem',
+                            fontSize: '0.7rem',
+                            fontWeight: 600
+                          }}
+                        >
+                          <Edit size={12} /> Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeletePrice(p._id, `${p.garmentType} - ${p.alterationType}`)}
+                          title="Delete Rate Rule"
+                          style={{
+                            background: 'rgba(239, 68, 68, 0.12)',
+                            border: '1px solid rgba(239, 68, 68, 0.25)',
+                            color: '#f87171',
+                            padding: '0.2rem 0.45rem',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            fontSize: '0.7rem'
+                          }}
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -679,6 +808,141 @@ export const SuperAdminDashboard = () => {
           </div>
         )}
       </div>
+
+      {/* 8. ADD / EDIT PRICE RULE MODAL */}
+      {priceModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '1rem' }}>
+          <div className="erp-card" style={{ padding: '1.5rem', maxWidth: '520px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#d4af37' }}>
+                  {editingPriceId ? 'Edit Price Rule' : 'Create New Price Rule'}
+                </h3>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  Configure tier rates with dynamic multipliers
+                </p>
+              </div>
+              <X size={18} style={{ cursor: 'pointer', color: '#cbd5e1' }} onClick={() => setPriceModalOpen(false)} />
+            </div>
+
+            <form onSubmit={handleSavePrice} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.3rem', fontWeight: 600 }}>
+                    Garment Type *
+                  </label>
+                  <select
+                    value={garmentType}
+                    onChange={(e) => setGarmentType(e.target.value)}
+                    required
+                    style={{ width: '100%', padding: '0.55rem', fontSize: '0.8rem' }}
+                  >
+                    {GARMENT_TYPES.map(g => <option key={g} value={g}>{g}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.3rem', fontWeight: 600 }}>
+                    Alteration Type / Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={alterationType}
+                    onChange={(e) => setAlterationType(e.target.value)}
+                    required
+                    placeholder="e.g. Waist & Seat Adjustment"
+                    style={{ width: '100%', padding: '0.55rem', fontSize: '0.8rem' }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', color: '#10b981', marginBottom: '0.3rem', fontWeight: 700 }}>
+                  Normal Base Price (₹) * (1.0x)
+                </label>
+                <input
+                  type="number"
+                  value={normalPrice}
+                  onChange={(e) => handleNormalPriceChange(e.target.value)}
+                  required
+                  min={10}
+                  style={{ width: '100%', padding: '0.55rem', fontSize: '0.85rem', fontWeight: 700 }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', color: '#f3e5ab', marginBottom: '0.3rem' }}>
+                    Urgent (1.5x) (₹)
+                  </label>
+                  <input
+                    type="number"
+                    value={urgentPrice}
+                    onChange={(e) => setUrgentPrice(e.target.value)}
+                    style={{ width: '100%', padding: '0.55rem', fontSize: '0.8rem' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', color: '#f3e5ab', marginBottom: '0.3rem' }}>
+                    Very Urgent (2.0x) (₹)
+                  </label>
+                  <input
+                    type="number"
+                    value={veryUrgentPrice}
+                    onChange={(e) => setVeryUrgentPrice(e.target.value)}
+                    style={{ width: '100%', padding: '0.55rem', fontSize: '0.8rem' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', color: '#d4af37', marginBottom: '0.3rem', fontWeight: 600 }}>
+                    VIP Royal (2.5x) (₹)
+                  </label>
+                  <input
+                    type="number"
+                    value={vipPrice}
+                    onChange={(e) => setVipPrice(e.target.value)}
+                    style={{ width: '100%', padding: '0.55rem', fontSize: '0.8rem' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', color: '#f59e0b', marginBottom: '0.3rem' }}>
+                    Festival Rate (₹)
+                  </label>
+                  <input
+                    type="number"
+                    value={festivalPrice}
+                    onChange={(e) => setFestivalPrice(e.target.value)}
+                    style={{ width: '100%', padding: '0.55rem', fontSize: '0.8rem' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setPriceModalOpen(false)}
+                  style={{ flex: 1, background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid var(--border-subtle)', padding: '0.65rem', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '0.8125rem' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingPrice}
+                  className="btn-gold"
+                  style={{ flex: 2, padding: '0.65rem' }}
+                >
+                  {savingPrice ? 'Saving Price...' : (editingPriceId ? 'Update Price Rule' : 'Save Price Rule')}
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Responsive Inline Styles */}
       <style>{`
