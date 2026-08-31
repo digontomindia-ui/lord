@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import User from '../../models/User.js';
+import { autoSeedDatabase } from '../../utils/seed.js';
 
 const generateTokens = (id) => {
   const accessToken = jwt.sign({ id }, process.env.JWT_ACCESS_SECRET || 'fallback_access_secret', { expiresIn: '15m' });
@@ -65,12 +66,16 @@ export const login = async (req, res) => {
         }
       }
     });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error during login', error: error.message });
+  }
+};
+
 // @desc    Seed default accounts (if not already seeded)
 // @route   POST /api/auth/seed
 // @access  Public
 export const seedAccounts = async (req, res) => {
   try {
-    const { autoSeedDatabase } = await import('../../utils/seed.js');
     await autoSeedDatabase();
     res.json({ 
       success: true, 
@@ -80,4 +85,3 @@ export const seedAccounts = async (req, res) => {
     res.status(500).json({ success: false, message: 'Seeding failed', error: error.message });
   }
 };
-

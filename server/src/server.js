@@ -11,6 +11,7 @@ import referralRoutes from './modules/referral/referralRoutes.js';
 import reportsRoutes from './modules/reports/reportsRoutes.js';
 import notificationRoutes from './modules/notifications/notificationRoutes.js';
 import ticketRoutes from './modules/helpdesk/ticketRoutes.js';
+import { autoSeedDatabase } from './utils/seed.js';
 
 dotenv.config();
 
@@ -58,8 +59,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-import { autoSeedDatabase } from './utils/seed.js';
-
 // Database Connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/tailor_erp';
 mongoose.connect(MONGODB_URI)
@@ -68,7 +67,6 @@ mongoose.connect(MONGODB_URI)
     await autoSeedDatabase();
   })
   .catch(err => console.log('MongoDB connection error:', err));
-
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
