@@ -23,6 +23,27 @@ This system enforces strict role-based access control (RBAC), tenant isolation, 
 - **Backend**: Node.js, Express, MongoDB, Mongoose (with Transactions & Sessions)
 - **Security**: JWT Access/Refresh tokens, bcryptjs, Helmet, Express-Rate-Limit
 
+## 🐳 Deployment with Docker (Frontend + Backend + MongoDB)
+
+To spin up the complete stack (MongoDB, Express Server, and React Client) in Docker with a single command:
+
+```bash
+docker-compose up --build -d
+```
+
+- **Frontend Application**: `http://localhost:3000`
+- **Backend API**: `http://localhost:5000` (or proxied directly via `http://localhost:3000/api`)
+- **MongoDB**: `localhost:27017`
+
+To stop all running services:
+```bash
+docker-compose down
+```
+
+## ☁️ Cloud Deployment (Render / Railway)
+- **Render**: Connect this repository to Render and use the included [`render.yaml`](file:///c:/Users/User/Downloads/-LORD-S-BESPOKE/render.yaml) Blueprint to auto-deploy the Node backend, React static frontend, and connect a MongoDB database.
+- **Docker Compose / VPS / Railway**: Deploy the root `docker-compose.yml` to automatically provision all 3 services.
+
 ## Local Setup & Development
 
 ### 1. Prerequisites
@@ -44,7 +65,7 @@ npm install
 Create a `.env` file in the `/server` directory:
 ```env
 PORT=5000
-MONGO_URI=mongodb://127.0.0.1:27017/tailor_erp
+MONGODB_URI=mongodb://127.0.0.1:27017/tailor_erp
 JWT_ACCESS_SECRET=your_super_secret_access_key
 JWT_REFRESH_SECRET=your_super_secret_refresh_key
 ```
@@ -78,6 +99,6 @@ The backend features an automated regression test suite built with Jest and Mong
 
 ```bash
 cd server
-npm install -D jest supertest mongodb-memory-server
 npm test
 ```
+

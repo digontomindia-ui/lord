@@ -8,7 +8,48 @@ services:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+    networks:
+      - lords_network
+    restart: unless-stopped
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: lords_erp_server
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongodb:27017/tailor_erp
+      - JWT_ACCESS_SECRET=lords_bespoke_jwt_access_secret_production_key_2026
+      - JWT_REFRESH_SECRET=lords_bespoke_jwt_refresh_secret_production_key_2026
+    depends_on:
+      - mongodb
+    networks:
+      - lords_network
+    restart: unless-stopped
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=/api
+    container_name: lords_erp_client
+    ports:
+      - "3000:80"
+    depends_on:
+      - server
+    networks:
+      - lords_network
     restart: unless-stopped
 
 volumes:
   mongo_data:
+    driver: local
+
+networks:
+  lords_network:
+    driver: bridge
