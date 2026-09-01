@@ -111,7 +111,7 @@ export const AppShell = ({ children }) => {
                 LORD'S BESPOKE
               </span>
               <span style={{ fontSize: '0.625rem', color: '#d4af37', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                Alteration ERP
+                Bespoke Atelier
               </span>
             </div>
           )}
@@ -242,7 +242,7 @@ export const AppShell = ({ children }) => {
               <Menu size={20} />
             </button>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8125rem' }}>
-              <span style={{ color: 'var(--text-muted)' }}>Lord's ERP</span>
+              <span style={{ color: 'var(--text-muted)' }}>Lord's Bespoke</span>
               <span style={{ color: 'var(--text-muted)' }}>/</span>
               <span style={{ color: '#d4af37', fontWeight: 600 }}>{getPageBreadcrumb()}</span>
             </div>
@@ -327,7 +327,7 @@ export const AppShell = ({ children }) => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <img src="/logo.png" alt="Logo" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
-                <span style={{ fontWeight: 800, fontSize: '0.95rem', color: '#f8fafc' }}>LORD'S ERP</span>
+                <span style={{ fontWeight: 800, fontSize: '0.95rem', color: '#f8fafc' }}>LORD'S BESPOKE</span>
               </div>
               <X size={18} style={{ cursor: 'pointer', color: '#cbd5e1' }} onClick={() => setMobileDrawerOpen(false)} />
             </div>

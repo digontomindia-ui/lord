@@ -40,7 +40,7 @@ const Login = () => {
       <div className="card max-w-md w-full p-8 space-y-8">
         <div className="text-center">
           <ShieldCheck className="mx-auto h-12 w-12 text-primary-600 mb-4" />
-          <h2 className="text-2xl font-bold text-slate-900">LORD'S ERP</h2>
+          <h2 className="text-2xl font-bold text-slate-900">LORD'S BESPOKE</h2>
           <p className="text-sm text-slate-500 mt-2">Sign in to access your portal</p>
         </div>
 

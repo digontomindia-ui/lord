@@ -10,7 +10,7 @@ const Layout = ({ children }) => {
       {/* Sidebar (Stubbed for now) */}
       <aside className="w-64 bg-slate-900 text-white hidden md:flex flex-col">
         <div className="h-16 flex items-center px-6 border-b border-slate-800">
-          <span className="text-lg font-bold tracking-wider">LORD'S ERP</span>
+          <span className="text-lg font-bold tracking-wider">LORD'S BESPOKE</span>
         </div>
         <nav className="flex-1 px-4 py-6 space-y-2">
           {/* Menu items would be dynamically mapped here based on user.role */}

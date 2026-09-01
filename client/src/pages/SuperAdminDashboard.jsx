@@ -248,7 +248,7 @@ export const SuperAdminDashboard = () => {
           </button>
 
           <button
-            onClick={() => alert('Exporting ERP operational metrics report (CSV)...')}
+            onClick={() => alert('Exporting atelier operational metrics report (CSV)...')}
             className="btn-gold"
             style={{ fontSize: '0.75rem', padding: '0.4rem 0.85rem' }}
           >

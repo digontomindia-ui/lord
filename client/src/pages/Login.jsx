@@ -284,7 +284,7 @@ export const Login = () => {
               gap: '0.75rem'
             }}>
               <span style={{ height: '1px', width: '30px', background: 'linear-gradient(to right, transparent, #d4af37)' }} />
-              ALTERATION ERP
+              BESPOKE ATELIER
               <span style={{ height: '1px', width: '30px', background: 'linear-gradient(to left, transparent, #d4af37)' }} />
             </div>
 
@@ -407,7 +407,7 @@ export const Login = () => {
                 {authMode === 'login' ? 'Sign in' : 'Create Account'}
               </h2>
               <p style={{ color: '#94a3b8', fontSize: '0.8rem', marginTop: '0.2rem' }}>
-                {authMode === 'login' ? 'Access your ERP workspace' : 'Register your partner role on Lord\'s ERP'}
+                {authMode === 'login' ? 'Access your Atelier workspace' : 'Register your partner role on Lord\'s Bespoke'}
               </p>
             </div>
 
@@ -928,7 +928,7 @@ export const Login = () => {
         color: '#64748b',
         borderTop: '1px solid rgba(255, 255, 255, 0.04)'
       }}>
-        © 2026 <strong style={{ color: '#d4af37' }}>LORD'S BESPOKE</strong> Alteration ERP. All rights reserved.
+        © 2026 <strong style={{ color: '#d4af37' }}>LORD'S BESPOKE</strong> Atelier. All rights reserved.
       </footer>
 
       {/* Responsive Inline Styles */}

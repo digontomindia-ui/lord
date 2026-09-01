@@ -128,14 +128,14 @@ app.use((err, req, res, next) => {
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/lords_bespoke';
 mongoose.connect(MONGODB_URI)
   .then(async () => {
-    console.log('MongoDB Connected successfully to LORD\'S BESPOKE ERP Core');
+    console.log('MongoDB Connected successfully to LORD\'S BESPOKE Atelier Platform');
     await autoSeedDatabase();
   })
   .catch(err => console.error('MongoDB connection error:', err));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`LORD'S BESPOKE ERP Server running on port ${PORT}`);
+  console.log(`LORD'S BESPOKE Platform running on port ${PORT}`);
 });
 
 export default app;
