@@ -205,7 +205,9 @@ export const register = async (req, res) => {
         experience: 10,
         specialization: specialization || ['SUIT', 'SHIRT', 'PANT'],
         mobile: cleanMobile,
-        status: 'PENDING_APPROVAL'
+        status: 'PENDING_APPROVAL',
+        referralCode: userReferralCode,
+        referredBy: uplineUser ? uplineUser._id : undefined
       });
     } else if (assignedRole === 'TAILOR') {
       await Tailor.create({
@@ -215,7 +217,9 @@ export const register = async (req, res) => {
         mobile: cleanMobile,
         experience: 5,
         specialization: specialization || ['SHIRT', 'PANT'],
-        status: 'PENDING_APPROVAL'
+        status: 'PENDING_APPROVAL',
+        referralCode: userReferralCode,
+        referredBy: uplineUser ? uplineUser._id : undefined
       });
     } else if (assignedRole === 'DELIVERY_BOY') {
       await DeliveryBoy.create({
@@ -223,7 +227,9 @@ export const register = async (req, res) => {
         deliveryBoyCode: `DLV-${randomCode}`,
         name,
         mobile: cleanMobile,
-        status: 'PENDING_APPROVAL'
+        status: 'PENDING_APPROVAL',
+        referralCode: userReferralCode,
+        referredBy: uplineUser ? uplineUser._id : undefined
       });
     }
 

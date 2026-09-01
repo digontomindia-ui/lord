@@ -25,7 +25,9 @@ const deliveryBoySchema = new mongoose.Schema({
     type: String, 
     enum: ['ACTIVE', 'PENDING_APPROVAL', 'SUSPENDED', 'INACTIVE', 'ON_DELIVERY'], 
     default: 'PENDING_APPROVAL' 
-  }
+  },
+  referralCode: { type: String, unique: true, sparse: true },
+  referredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
 
 deliveryBoySchema.index({ status: 1 });

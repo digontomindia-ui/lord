@@ -22,7 +22,9 @@ const tailorSchema = new mongoose.Schema({
     pending: { type: Number, default: 0 },
     averageTimeMinutes: { type: Number, default: 0 },
     qualityScore: { type: Number, default: 100 }
-  }
+  },
+  referralCode: { type: String, unique: true, sparse: true },
+  referredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
 
 tailorSchema.index({ masterId: 1, status: 1 });

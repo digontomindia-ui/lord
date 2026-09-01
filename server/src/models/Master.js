@@ -25,7 +25,9 @@ const masterSchema = new mongoose.Schema({
     qcPassed: { type: Number, default: 0 },
     qcFailed: { type: Number, default: 0 },
     qualityScore: { type: Number, default: 100 }
-  }
+  },
+  referralCode: { type: String, unique: true, sparse: true },
+  referredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
 
 masterSchema.index({ status: 1 });
