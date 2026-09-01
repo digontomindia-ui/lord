@@ -7,14 +7,14 @@ const deliveryBoySchema = new mongoose.Schema({
   mobile: { type: String, required: true },
   vehicle: {
     type: { type: String, enum: ['BIKE', 'SCOOTER', 'CAR', 'OTHER'], default: 'BIKE' },
-    number: { type: String, required: true }
+    number: { type: String, default: 'PENDING' }
   },
-  licenseNumber: { type: String, required: true },
+  licenseNumber: { type: String, default: 'PENDING' },
   address: {
-    line1: { type: String, required: true },
-    city: { type: String, required: true },
-    state: { type: String, required: true },
-    pinCode: { type: String, required: true }
+    line1: { type: String, default: 'Fleet Station Address' },
+    city: { type: String, default: 'City' },
+    state: { type: String, default: 'State' },
+    pinCode: { type: String, default: '000000' }
   },
   currentLocation: {
     latitude: Number,
@@ -23,8 +23,8 @@ const deliveryBoySchema = new mongoose.Schema({
   },
   status: { 
     type: String, 
-    enum: ['ACTIVE', 'SUSPENDED', 'INACTIVE', 'ON_DELIVERY'], 
-    default: 'ACTIVE' 
+    enum: ['ACTIVE', 'PENDING_APPROVAL', 'SUSPENDED', 'INACTIVE', 'ON_DELIVERY'], 
+    default: 'PENDING_APPROVAL' 
   }
 }, { timestamps: true });
 

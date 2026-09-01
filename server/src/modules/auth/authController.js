@@ -183,6 +183,7 @@ export const register = async (req, res) => {
         shopName: shopName || `${name}'s Store`,
         ownerName: name,
         mobile: cleanMobile,
+        email: cleanEmail,
         address: address || { line1: 'Main Store Address', city: 'City', state: 'State', pinCode: '000000' },
         status: 'PENDING_APPROVAL'
       });

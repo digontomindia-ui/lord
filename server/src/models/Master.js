@@ -8,12 +8,16 @@ const masterSchema = new mongoose.Schema({
   specialization: [{ type: String }],
   mobile: { type: String, required: true },
   address: {
-    line1: { type: String, required: true },
-    city: { type: String, required: true },
-    state: { type: String, required: true },
-    pinCode: { type: String, required: true }
+    line1: { type: String, default: 'Atelier Workshop Address' },
+    city: { type: String, default: 'City' },
+    state: { type: String, default: 'State' },
+    pinCode: { type: String, default: '000000' }
   },
-  status: { type: String, enum: ['ACTIVE', 'SUSPENDED', 'INACTIVE'], default: 'ACTIVE' },
+  status: { 
+    type: String, 
+    enum: ['ACTIVE', 'PENDING_APPROVAL', 'SUSPENDED', 'INACTIVE'], 
+    default: 'PENDING_APPROVAL' 
+  },
   performance: {
     totalOrders: { type: Number, default: 0 },
     completedOrders: { type: Number, default: 0 },

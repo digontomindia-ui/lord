@@ -20,7 +20,11 @@ const shopSchema = new mongoose.Schema({
     latitude: { type: Number },
     longitude: { type: Number }
   },
-  status: { type: String, enum: ['ACTIVE', 'SUSPENDED', 'INACTIVE'], default: 'ACTIVE' },
+  status: { 
+    type: String, 
+    enum: ['ACTIVE', 'PENDING_APPROVAL', 'SUSPENDED', 'INACTIVE'], 
+    default: 'PENDING_APPROVAL' 
+  },
   referralCode: { type: String, unique: true, sparse: true },
   referredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });

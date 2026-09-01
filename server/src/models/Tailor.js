@@ -11,7 +11,11 @@ const tailorSchema = new mongoose.Schema({
     type: String,
     enum: ['SHIRT', 'PANT', 'SUIT', 'BLAZER', 'SHERWANI', 'LADIES_WEAR', 'REPAIR']
   }],
-  status: { type: String, enum: ['ACTIVE', 'SUSPENDED', 'INACTIVE'], default: 'ACTIVE' },
+  status: { 
+    type: String, 
+    enum: ['ACTIVE', 'PENDING_APPROVAL', 'SUSPENDED', 'INACTIVE'], 
+    default: 'PENDING_APPROVAL' 
+  },
   performance: {
     totalAssigned: { type: Number, default: 0 },
     completed: { type: Number, default: 0 },
