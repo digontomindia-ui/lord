@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../shared/apiClient';
@@ -6,7 +6,7 @@ import {
   Phone, Mail, Lock, Eye, EyeOff, LogIn, Crown, Store, 
   Scissors, Shirt, Truck, ShieldCheck, Clock, 
   BarChart3, User, AlertCircle, Loader2, UserPlus, 
-  CheckCircle2, ArrowRight 
+  CheckCircle2, ArrowRight, Share2 
 } from 'lucide-react';
 
 const ROLES_LIST = [
@@ -38,11 +38,22 @@ export const Login = () => {
   const [regPassword, setRegPassword] = useState('');
   const [regRole, setRegRole] = useState('SHOP');
   const [regBusinessName, setRegBusinessName] = useState('');
+  const [regReferralCode, setRegReferralCode] = useState('');
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  // Auto-detect referral link in URL (?ref=SHP-1234 or ?referral=SHP-1234)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref') || params.get('referral');
+    if (ref) {
+      setRegReferralCode(ref.trim().toUpperCase());
+      setAuthMode('register');
+    }
+  }, []);
 
   // Forgot Password / OTP Reset Flow
   const [forgotIdentifier, setForgotIdentifier] = useState('');
@@ -165,7 +176,8 @@ export const Login = () => {
         password: regPassword,
         role: regRole,
         shopName: regRole === 'SHOP' ? regBusinessName : undefined,
-        workshopName: regRole === 'MASTER' ? regBusinessName : undefined
+        workshopName: regRole === 'MASTER' ? regBusinessName : undefined,
+        referralCode: regReferralCode.trim() ? regReferralCode.trim().toUpperCase() : undefined
       });
 
       if (response?.data?.accessToken) {
@@ -665,10 +677,25 @@ export const Login = () => {
                   </div>
                 </div>
 
-                {/* Password */}
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', color: '#cbd5e1', marginBottom: '0.25rem' }}>Password *</label>
-                  <input type="password" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} required placeholder="Create secure password" style={{ width: '100%', padding: '0.55rem', fontSize: '0.8rem' }} />
+                {/* Password & Referral Code */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#cbd5e1', marginBottom: '0.25rem' }}>Password *</label>
+                    <input type="password" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} required placeholder="Create secure password" style={{ width: '100%', padding: '0.55rem', fontSize: '0.8rem' }} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#cbd5e1', marginBottom: '0.25rem' }}>Referral / Partner Code</label>
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                      <Share2 size={13} color="#d4af37" style={{ position: 'absolute', left: '8px' }} />
+                      <input 
+                        type="text" 
+                        value={regReferralCode} 
+                        onChange={(e) => setRegReferralCode(e.target.value.toUpperCase())} 
+                        placeholder="e.g. SHP-1002 (Optional)" 
+                        style={{ width: '100%', padding: '0.55rem 0.55rem 0.55rem 1.65rem', fontSize: '0.8rem', color: '#f3e5ab', fontWeight: 700, textTransform: 'uppercase' }} 
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 {/* Register Submit Button */}

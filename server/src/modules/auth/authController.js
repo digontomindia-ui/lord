@@ -163,7 +163,14 @@ export const register = async (req, res) => {
     // Generate Unique Referral Code
     const prefix = assignedRole.slice(0, 3);
     const randomCode = Math.floor(1000 + Math.random() * 9000);
-    const referralCode = `${prefix}-${randomCode}`;
+    const userReferralCode = `${prefix}-${randomCode}`;
+
+    // Lookup upline sponsor if referral code provided
+    let uplineUser = null;
+    const sponsorCode = req.body.referralCode || req.body.referredByCode || req.body.sponsorCode || req.body.ref;
+    if (sponsorCode) {
+      uplineUser = await User.findOne({ referralCode: String(sponsorCode).trim().toUpperCase() });
+    }
 
     const user = await User.create({
       name,
@@ -172,7 +179,8 @@ export const register = async (req, res) => {
       passwordHash,
       role: assignedRole,
       status: 'PENDING_APPROVAL',
-      referralCode
+      referralCode: userReferralCode,
+      uplineId: uplineUser ? uplineUser._id : undefined
     });
 
     // Create domain profile documents in PENDING_APPROVAL status
@@ -185,7 +193,9 @@ export const register = async (req, res) => {
         mobile: cleanMobile,
         email: cleanEmail,
         address: address || { line1: 'Main Store Address', city: 'City', state: 'State', pinCode: '000000' },
-        status: 'PENDING_APPROVAL'
+        status: 'PENDING_APPROVAL',
+        referralCode: userReferralCode,
+        referredBy: uplineUser ? uplineUser._id : undefined
       });
     } else if (assignedRole === 'MASTER') {
       await Master.create({
