@@ -44,6 +44,14 @@ export const savePrice = async (req, res) => {
     const existing = await PriceMaster.findOne({ garmentType, alterationType });
     
     if (existing) {
+      const oldPrices = {
+        normalPrice: existing.normalPrice,
+        urgentPrice: existing.urgentPrice,
+        veryUrgentPrice: existing.veryUrgentPrice,
+        vipPrice: existing.vipPrice,
+        festivalPrice: existing.festivalPrice
+      };
+
       existing.normalPrice = nPrice;
       existing.urgentPrice = uPrice;
       existing.veryUrgentPrice = vuPrice;
@@ -51,6 +59,17 @@ export const savePrice = async (req, res) => {
       existing.festivalPrice = fPrice;
       existing.active = true;
       await existing.save();
+
+      // Record non-destructive audit trail in PriceHistory
+      if (req.user?._id) {
+        await PriceHistory.create({
+          priceId: existing._id,
+          oldPrice: oldPrices,
+          newPrice: { normalPrice: nPrice, urgentPrice: uPrice, veryUrgentPrice: vuPrice, vipPrice: vPrice, festivalPrice: fPrice },
+          changedBy: req.user._id,
+          reason: reason || 'Price Catalogue Update'
+        });
+      }
 
       return res.json({ success: true, message: `Price updated for ${garmentType} - ${alterationType}`, data: existing });
     }
@@ -77,12 +96,20 @@ export const savePrice = async (req, res) => {
 // @access  Private (SUPER_ADMIN)
 export const updatePriceById = async (req, res) => {
   try {
-    const { normalPrice, urgentPrice, veryUrgentPrice, vipPrice, festivalPrice, active } = req.body;
+    const { normalPrice, urgentPrice, veryUrgentPrice, vipPrice, festivalPrice, active, reason } = req.body;
     const priceDoc = await PriceMaster.findById(req.params.id);
     
     if (!priceDoc) {
       return res.status(404).json({ success: false, message: 'Price entry not found' });
     }
+
+    const oldPrices = {
+      normalPrice: priceDoc.normalPrice,
+      urgentPrice: priceDoc.urgentPrice,
+      veryUrgentPrice: priceDoc.veryUrgentPrice,
+      vipPrice: priceDoc.vipPrice,
+      festivalPrice: priceDoc.festivalPrice
+    };
 
     if (normalPrice !== undefined) priceDoc.normalPrice = Number(normalPrice);
     if (urgentPrice !== undefined) priceDoc.urgentPrice = Number(urgentPrice);
@@ -92,6 +119,22 @@ export const updatePriceById = async (req, res) => {
     if (active !== undefined) priceDoc.active = Boolean(active);
 
     await priceDoc.save();
+
+    if (req.user?._id) {
+      await PriceHistory.create({
+        priceId: priceDoc._id,
+        oldPrice: oldPrices,
+        newPrice: {
+          normalPrice: priceDoc.normalPrice,
+          urgentPrice: priceDoc.urgentPrice,
+          veryUrgentPrice: priceDoc.veryUrgentPrice,
+          vipPrice: priceDoc.vipPrice,
+          festivalPrice: priceDoc.festivalPrice
+        },
+        changedBy: req.user._id,
+        reason: reason || 'Price rule modified by Admin'
+      });
+    }
 
     res.json({ success: true, message: 'Price updated successfully', data: priceDoc });
   } catch (error) {

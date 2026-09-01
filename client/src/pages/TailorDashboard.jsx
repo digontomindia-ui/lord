@@ -1,22 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../shared/apiClient';
-import { Scissors, CheckCircle, Play, CheckCheck, RefreshCw, X, AlertCircle } from 'lucide-react';
+import { Scissors, CheckCircle, Play, CheckCheck, RefreshCw, X, AlertCircle, Eye, Ruler, AlertTriangle } from 'lucide-react';
 
 export const TailorDashboard = () => {
   const [metrics, setMetrics] = useState(null);
   const [assignedOrders, setAssignedOrders] = useState([]);
+  const [performance, setPerformance] = useState(null);
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState(null);
+
+  // Selected Order for Specification Modal
+  const [specOrder, setSpecOrder] = useState(null);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [dashRes, ordersRes] = await Promise.all([
+      const [dashRes, ordersRes, perfRes] = await Promise.all([
         apiClient.get('/dashboards/tailor').catch(() => ({ data: {} })),
-        apiClient.get('/tailor/orders').catch(() => ({ data: [] }))
+        apiClient.get('/tailor/orders').catch(() => ({ data: [] })),
+        apiClient.get('/tailor/performance').catch(() => ({ data: {} }))
       ]);
       setMetrics(dashRes?.data || {});
       setAssignedOrders(ordersRes?.data || []);
+      setPerformance(perfRes?.data || {});
     } catch (err) {
       console.error('Error fetching tailor workspace:', err);
     } finally {
@@ -31,7 +37,7 @@ export const TailorDashboard = () => {
   const handleAcceptOrder = async (orderId) => {
     try {
       await apiClient.post(`/tailor/orders/${orderId}/accept`);
-      setFeedback({ type: 'success', message: 'Order acknowledged & accepted!' });
+      setFeedback({ type: 'success', message: 'Order acknowledged & accepted at workstation!' });
       fetchData();
     } catch (err) {
       setFeedback({ type: 'error', message: err?.message || 'Failed to accept order' });
@@ -41,7 +47,7 @@ export const TailorDashboard = () => {
   const handleStartWork = async (orderId) => {
     try {
       await apiClient.post(`/tailor/orders/${orderId}/start`);
-      setFeedback({ type: 'success', message: 'Work started on order!' });
+      setFeedback({ type: 'success', message: 'Work started on garment alteration!' });
       fetchData();
     } catch (err) {
       setFeedback({ type: 'error', message: err?.message || 'Failed to start work' });
@@ -64,9 +70,10 @@ export const TailorDashboard = () => {
   const handleCompleteWork = async (orderId) => {
     try {
       await apiClient.post(`/tailor/orders/${orderId}/complete`, {
-        notes: 'Alteration finished and verified against measurements'
+        notes: 'Alteration finished and verified against precision measurements'
       });
-      setFeedback({ type: 'success', message: 'Alteration completed and submitted to Master QC! Daily earnings updated.' });
+      setFeedback({ type: 'success', message: 'Alteration completed and submitted to Master QC! Labor wage credited to wallet.' });
+      if (specOrder?._id === orderId) setSpecOrder(null);
       fetchData();
     } catch (err) {
       setFeedback({ type: 'error', message: err?.message || 'Failed to complete work' });
@@ -86,7 +93,7 @@ export const TailorDashboard = () => {
             </span>
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '2px' }}>
-            Active tailoring queue, progress milestones, and daily earned wage
+            Active tailoring queue, precision measurements, progress milestones, and daily wage accrual
           </p>
         </div>
         <button 
@@ -122,7 +129,9 @@ export const TailorDashboard = () => {
         </div>
         <div className="erp-card" style={{ padding: '0.9rem 1.1rem' }}>
           <p style={{ fontSize: '0.72rem', color: '#d4af37', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Today's Completed</p>
-          <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#10b981', marginTop: '0.3rem' }}>{metrics?.completedToday || 0}</h2>
+          <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#10b981', marginTop: '0.3rem' }}>
+            {performance?.completedToday ?? (metrics?.completedToday || 0)}
+          </h2>
           <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>Dispatched to QC</p>
         </div>
         <div className="erp-card" style={{ padding: '0.9rem 1.1rem' }}>
@@ -132,7 +141,9 @@ export const TailorDashboard = () => {
         </div>
         <div className="erp-card" style={{ padding: '0.9rem 1.1rem' }}>
           <p style={{ fontSize: '0.72rem', color: '#d4af37', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Quality Score</p>
-          <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#a78bfa', marginTop: '0.3rem' }}>{metrics?.qualityScore || 100}%</h2>
+          <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#a78bfa', marginTop: '0.3rem' }}>
+            {performance?.qualityScore ?? (metrics?.qualityScore || 100)}%
+          </h2>
           <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>First-pass accuracy</p>
         </div>
       </div>
@@ -169,15 +180,28 @@ export const TailorDashboard = () => {
                       {order.priority}
                     </span>
                   </div>
-                  <span style={{ padding: '0.2rem 0.5rem', background: 'rgba(212, 175, 55, 0.12)', border: '1px solid rgba(212, 175, 55, 0.3)', color: '#f3e5ab', borderRadius: 'var(--radius-xs)', fontSize: '0.72rem', fontWeight: 600 }}>
-                    {order.status}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <button
+                      onClick={() => setSpecOrder(order)}
+                      style={{ background: 'rgba(212, 175, 55, 0.1)', color: '#f3e5ab', border: '1px solid rgba(212, 175, 55, 0.3)', padding: '0.25rem 0.6rem', borderRadius: 'var(--radius-xs)', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                    >
+                      <Ruler size={13} /> View Measurements
+                    </button>
+                    <span style={{ padding: '0.2rem 0.5rem', background: 'rgba(212, 175, 55, 0.12)', border: '1px solid rgba(212, 175, 55, 0.3)', color: '#f3e5ab', borderRadius: 'var(--radius-xs)', fontSize: '0.72rem', fontWeight: 600 }}>
+                      {order.status}
+                    </span>
+                  </div>
                 </div>
 
                 <div style={{ fontSize: '0.8125rem' }}>
                   <p><strong>Garment:</strong> {order.items?.[0]?.garmentType} • <strong>Alteration:</strong> {order.items?.[0]?.alterations?.type || 'Standard'}</p>
                   {order.specialNotes && (
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.2rem' }}>Notes: {order.specialNotes}</p>
+                  )}
+                  {order.items?.[0]?.damageNotes && (
+                    <p style={{ color: '#f59e0b', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      <AlertTriangle size={12} /> Pre-damage note: {order.items[0].damageNotes}
+                    </p>
                   )}
                 </div>
 
@@ -228,6 +252,75 @@ export const TailorDashboard = () => {
           </div>
         )}
       </div>
+
+      {/* TAILOR MEASUREMENTS & SPECIFICATIONS MODAL */}
+      {specOrder && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '1rem' }}>
+          <div className="erp-card" style={{ padding: '1.5rem', maxWidth: '520px', width: '100%', maxHeight: '85vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-gold)', paddingBottom: '0.75rem', marginBottom: '1rem' }}>
+              <div>
+                <span style={{ fontSize: '0.72rem', color: '#d4af37', fontWeight: 700 }}>WORKSTATION SPECIFICATION</span>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#ffffff' }}>{specOrder.orderNumber}</h3>
+              </div>
+              <X size={18} style={{ cursor: 'pointer', color: '#cbd5e1' }} onClick={() => setSpecOrder(null)} />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              <div>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Garment & Alteration Type:</p>
+                <p style={{ fontWeight: 700, color: '#f3e5ab' }}>
+                  {specOrder.items?.[0]?.garmentType} • {specOrder.items?.[0]?.alterations?.type || 'Bespoke Fitting'}
+                </p>
+              </div>
+
+              <div>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>Client Measurement Specifications:</p>
+                {specOrder.items?.[0]?.measurements && Object.keys(specOrder.items[0].measurements).length > 0 ? (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', background: 'rgba(16, 19, 26, 0.8)', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border-gold)' }}>
+                    {Object.entries(specOrder.items[0].measurements).map(([k, v]) => (
+                      <div key={k} style={{ fontSize: '0.8rem' }}>
+                        <span style={{ color: 'var(--text-muted)', textTransform: 'capitalize' }}>{k}: </span>
+                        <strong style={{ color: '#ffffff' }}>{v} in</strong>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>Standard sizing requested (no custom measurements logged).</p>
+                )}
+              </div>
+
+              {specOrder.specialNotes && (
+                <div>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Special Atelier Notes:</p>
+                  <p style={{ fontSize: '0.8rem', background: 'rgba(255,255,255,0.03)', padding: '0.5rem', borderRadius: '4px', color: '#ffffff' }}>
+                    {specOrder.specialNotes}
+                  </p>
+                </div>
+              )}
+
+              {specOrder.items?.[0]?.damageNotes && (
+                <div style={{ background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '0.65rem', borderRadius: '4px' }}>
+                  <p style={{ fontSize: '0.75rem', color: '#f59e0b', fontWeight: 700 }}>Pre-Existing Fabric Damage:</p>
+                  <p style={{ fontSize: '0.78rem', color: '#fde68a', marginTop: '0.2rem' }}>
+                    {specOrder.items[0].damageNotes}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div style={{ marginTop: '1.25rem', display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setSpecOrder(null)}
+                className="btn-gold"
+                style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }}
+              >
+                Close Spec
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );

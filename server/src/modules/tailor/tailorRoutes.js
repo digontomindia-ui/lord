@@ -1,6 +1,7 @@
 import express from 'express';
 import { 
   getTailorOrders, 
+  getTailorPerformance, 
   acceptOrder, 
   startWork, 
   updateProgress, 
@@ -15,6 +16,7 @@ router.use(requireAuth);
 router.use(requireRole(['TAILOR', 'SUPER_ADMIN']));
 
 router.get('/orders', getTailorOrders);
+router.get('/performance', getTailorPerformance);
 router.post('/orders/:id/accept', acceptOrder);
 router.post('/orders/:id/start', startWork);
 router.post('/orders/:id/progress', updateProgress);

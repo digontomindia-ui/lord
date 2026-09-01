@@ -7,7 +7,7 @@ import { assertTransition, recordTimeline } from '../../services/orderStateMachi
 import { creditWallet } from '../../services/walletService.js';
 import { sendNotification } from '../../services/notificationService.js';
 
-// @desc    Get tailor assigned orders
+// @desc    Get tailor assigned orders (Masks customer PII)
 // @route   GET /api/v1/tailor/orders
 // @access  Private (TAILOR, SUPER_ADMIN)
 export const getTailorOrders = async (req, res) => {
@@ -15,9 +15,51 @@ export const getTailorOrders = async (req, res) => {
     const orders = await Order.find({
       tailorId: req.user._id,
       status: { $in: ['TAILOR_ASSIGNED', 'TAILOR_ACCEPTED', 'WORK_STARTED', 'WORK_IN_PROGRESS', 'REWORK_REQUIRED'] }
-    }).select('-customerId -pricing.subtotal -pricing.discount -pricing.tax'); // Mask sensitive customer & financial data
+    })
+    .select('-customerId -pricing.subtotal -pricing.discount -pricing.tax') // Strictly mask customer & financial PII
+    .populate('masterId', 'workshopName masterCode')
+    .sort({ priority: -1, createdAt: 1 });
 
     res.json({ success: true, count: orders.length, data: orders });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Get tailor performance analytics
+// @route   GET /api/v1/tailor/performance
+// @access  Private (TAILOR, SUPER_ADMIN)
+export const getTailorPerformance = async (req, res) => {
+  try {
+    const tailor = await Tailor.findOne({ userId: req.user._id });
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const [completedTodayCount, pendingCount] = await Promise.all([
+      Order.countDocuments({
+        tailorId: req.user._id,
+        status: { $in: ['WORK_COMPLETED', 'QC_PENDING', 'QC_APPROVED', 'READY_FOR_DELIVERY', 'ORDER_CLOSED'] },
+        updatedAt: { $gte: today }
+      }),
+      Order.countDocuments({
+        tailorId: req.user._id,
+        status: { $in: ['TAILOR_ASSIGNED', 'TAILOR_ACCEPTED', 'WORK_STARTED', 'WORK_IN_PROGRESS', 'REWORK_REQUIRED'] }
+      })
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        totalAssigned: tailor?.performance?.totalAssigned || 0,
+        completed: tailor?.performance?.completed || 0,
+        pending: pendingCount,
+        completedToday: completedTodayCount,
+        averageTimeMinutes: tailor?.performance?.averageTimeMinutes || 45,
+        qualityScore: tailor?.performance?.qualityScore || 100,
+        specialization: tailor?.specialization || []
+      }
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

@@ -184,6 +184,65 @@ export const assignTailor = async (req, res) => {
   }
 };
 
+// @desc    Reassign Tailor to order
+// @route   POST /api/v1/master/orders/:orderId/reassign-tailor
+// @access  Private (MASTER, SUPER_ADMIN)
+export const reassignTailor = async (req, res) => {
+  try {
+    const { tailorId, reason, instructions } = req.body;
+    if (!tailorId) return res.status(400).json({ success: false, message: 'New Tailor ID is required' });
+
+    const order = await Order.findById(req.params.orderId);
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+    const previousTailorId = order.tailorId;
+    order.tailorId = tailorId;
+    if (!['TAILOR_ASSIGNED', 'TAILOR_ACCEPTED', 'WORK_STARTED', 'WORK_IN_PROGRESS', 'REWORK_REQUIRED'].includes(order.status)) {
+      order.status = 'TAILOR_ASSIGNED';
+    }
+    await order.save();
+
+    // Mark previous assignment reassigned
+    if (previousTailorId) {
+      await WorkAssignment.updateMany(
+        { orderId: order._id, tailorId: previousTailorId, status: { $ne: 'COMPLETED' } },
+        { status: 'REASSIGNED' }
+      );
+    }
+
+    const masterId = await resolveMasterId(req.user);
+    const assignment = await WorkAssignment.create({
+      orderId: order._id,
+      masterId: masterId || req.user._id,
+      tailorId,
+      instructions: instructions || reason || 'Order reassigned to workstation',
+      status: 'ASSIGNED'
+    });
+
+    await recordTimeline({
+      orderId: order._id,
+      fromStatus: order.status,
+      toStatus: order.status,
+      action: 'Tailor Reassigned by Master',
+      performedBy: req.user._id,
+      performedByRole: req.user.role,
+      note: reason ? `Reassigned: ${reason}` : 'Order reallocated to another tailor'
+    });
+
+    await sendNotification({
+      recipientId: tailorId,
+      type: 'TAILOR_ASSIGNED',
+      title: 'Order Reassigned to You',
+      message: `Order ${order.orderNumber} has been reassigned to your workstation.`,
+      data: { orderId: order._id }
+    });
+
+    res.json({ success: true, message: 'Tailor reassigned successfully', data: { order, assignment } });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // @desc    Get QC Queue
 // @route   GET /api/v1/master/qc
 // @access  Private (MASTER, SUPER_ADMIN)

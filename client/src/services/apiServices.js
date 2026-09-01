@@ -5,10 +5,21 @@ export const authService = {
   login: (identifier, password) => apiClient.post('/auth/login', { identifier, password }),
   register: (data) => apiClient.post('/auth/register', data),
   refresh: (refreshToken) => apiClient.post('/auth/refresh', { refreshToken }),
+  forgotPassword: (identifier) => apiClient.post('/auth/forgot-password', { identifier }),
+  verifyOTP: (identifier, otp) => apiClient.post('/auth/verify-otp', { identifier, otp }),
+  resetPassword: (resetToken, newPassword) => apiClient.post('/auth/reset-password', { resetToken, newPassword }),
+  logout: () => apiClient.post('/auth/logout'),
   getMe: () => apiClient.get('/auth/me'),
   updateProfile: (data) => apiClient.patch('/profile', data),
   changePassword: (data) => apiClient.patch('/profile/password', data),
   seedAccounts: () => apiClient.post('/auth/seed')
+};
+
+// INVOICE SERVICE
+export const invoiceService = {
+  getInvoices: (params) => apiClient.get('/invoices', { params }),
+  getInvoiceById: (id) => apiClient.get(`/invoices/${id}`),
+  generateInvoice: (orderId) => apiClient.post('/invoices/generate', { orderId })
 };
 
 // 2. ORDER SERVICE

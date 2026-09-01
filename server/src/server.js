@@ -23,6 +23,7 @@ import dashboardRoutes from './modules/dashboards/dashboardRoutes.js';
 import reportsRoutes from './modules/reports/reportsRoutes.js';
 import settingsRoutes from './modules/settings/settingsRoutes.js';
 import auditRoutes from './modules/audit/auditRoutes.js';
+import rateLimit from 'express-rate-limit';
 
 import { autoSeedDatabase } from './utils/seed.js';
 
@@ -35,6 +36,16 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Global Rate Limiting for API Endpoints
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many requests, please try again after 15 minutes.' }
+});
+app.use('/api', apiLimiter);
 
 // Health Check Endpoint
 app.get(['/api/health', '/api/v1/health', '/health'], (req, res) => {

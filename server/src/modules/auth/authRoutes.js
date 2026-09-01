@@ -6,7 +6,11 @@ import {
   updateProfile, 
   changePassword, 
   register, 
-  seedAccounts 
+  seedAccounts,
+  forgotPassword,
+  verifyOTP,
+  resetPassword,
+  logout
 } from './authController.js';
 import { requireAuth } from '../../middleware/auth.js';
 import { requireRole } from '../../middleware/rbac.js';
@@ -18,6 +22,10 @@ router.post('/login', login);
 router.post('/refresh', refreshToken);
 router.post('/seed', seedAccounts);
 router.get('/seed', seedAccounts);
+router.post('/forgot-password', forgotPassword);
+router.post('/verify-otp', verifyOTP);
+router.post('/reset-password', resetPassword);
+router.post('/logout', logout);
 
 // Protected authenticated user endpoints
 router.get('/me', requireAuth, getMe);

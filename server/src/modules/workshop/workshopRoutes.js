@@ -5,6 +5,7 @@ import {
   submitInspection, 
   getMasterTailors, 
   assignTailor, 
+  reassignTailor, 
   getQCQueue, 
   approveQC, 
   failQC 
@@ -22,6 +23,7 @@ router.post('/receiving/:orderId/accept', acceptReceiving);
 router.post('/inspections/:orderId', submitInspection);
 router.get('/tailors', getMasterTailors);
 router.post('/orders/:orderId/assign-tailor', assignTailor);
+router.post('/orders/:orderId/reassign-tailor', reassignTailor);
 router.get('/qc', getQCQueue);
 router.post('/qc/:orderId/approve', approveQC);
 router.post('/qc/:orderId/fail', failQC);

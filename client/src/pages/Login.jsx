@@ -44,8 +44,80 @@ export const Login = () => {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
+  // Forgot Password / OTP Reset Flow
+  const [forgotIdentifier, setForgotIdentifier] = useState('');
+  const [forgotStep, setForgotStep] = useState(1); // 1: Request OTP, 2: Verify OTP & New Password
+  const [otpCode, setOtpCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
   const navigate = useNavigate();
   const { loginUser } = useAuth();
+
+  const handleRequestOTP = async (e) => {
+    e.preventDefault();
+    if (!forgotIdentifier.trim()) {
+      setError('Please enter your registered email or mobile number.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    setSuccessMsg('');
+    try {
+      const res = await apiClient.post('/auth/forgot-password', {
+        identifier: forgotIdentifier.trim()
+      });
+      setSuccessMsg(res.data?.message || 'Verification code sent to your registered contact.');
+      setForgotStep(2);
+    } catch (err) {
+      setError(err?.message || 'Could not send verification OTP.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    if (!otpCode.trim() || !newPassword) {
+      setError('Please enter the verification code and your new password.');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match. Please re-enter.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const verifyRes = await apiClient.post('/auth/verify-otp', {
+        identifier: forgotIdentifier.trim(),
+        otp: otpCode.trim()
+      });
+
+      const token = verifyRes.data?.resetToken;
+      if (!token) throw new Error('Verification failed');
+
+      await apiClient.post('/auth/reset-password', {
+        resetToken: token,
+        newPassword
+      });
+
+      setSuccessMsg('Password updated successfully! Please sign in with your new credentials.');
+      setAuthMode('login');
+      setForgotStep(1);
+      setOtpCode('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      setError(err?.message || 'Failed to reset password. Please check your verification code.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
@@ -383,6 +455,24 @@ export const Login = () => {
               </div>
             )}
 
+            {/* Success Message */}
+            {successMsg && (
+              <div style={{
+                padding: '0.65rem 0.85rem',
+                borderRadius: '8px',
+                background: 'rgba(16, 185, 129, 0.12)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                color: '#86efac',
+                fontSize: '0.78rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem'
+              }}>
+                <CheckCircle2 size={15} style={{ flexShrink: 0 }} />
+                <span>{successMsg}</span>
+              </div>
+            )}
+
             {/* A. SIGN IN FORM */}
             {authMode === 'login' && (
               <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
@@ -463,7 +553,13 @@ export const Login = () => {
                 {/* Forgot Password Link */}
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                   <span 
-                    onClick={() => alert('Please contact Super Admin to reset your password.')}
+                    onClick={() => {
+                      setAuthMode('forgot');
+                      setError('');
+                      setSuccessMsg('');
+                      setForgotIdentifier(identifier);
+                      setForgotStep(1);
+                    }}
                     style={{ color: '#d4af37', fontSize: '0.72rem', fontWeight: 500, cursor: 'pointer' }}
                   >
                     Forgot Password?
@@ -593,6 +689,195 @@ export const Login = () => {
                 </button>
 
               </form>
+            )}
+
+            {/* C. FORGOT PASSWORD & OTP RESET FORM */}
+            {authMode === 'forgot' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+                <div style={{ borderBottom: '1px solid rgba(212, 175, 55, 0.2)', paddingBottom: '0.5rem', marginBottom: '0.25rem' }}>
+                  <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#f3e5ab' }}>Reset Password</h3>
+                  <p style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                    {forgotStep === 1 
+                      ? 'Enter your registered email or phone to receive a 6-digit verification OTP.' 
+                      : `Enter the 6-digit OTP sent to your contact and your new password.`}
+                  </p>
+                </div>
+
+                {forgotStep === 1 ? (
+                  <form onSubmit={handleRequestOTP} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.78rem', color: '#cbd5e1', fontWeight: 500, marginBottom: '0.35rem' }}>
+                        Registered Email / Mobile Number *
+                      </label>
+                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                        <Mail size={15} color="#d4af37" style={{ position: 'absolute', left: '12px' }} />
+                        <input
+                          type="text"
+                          value={forgotIdentifier}
+                          onChange={(e) => setForgotIdentifier(e.target.value)}
+                          required
+                          placeholder="e.g. 9811223344 or admin@loeds.com"
+                          style={{
+                            width: '100%',
+                            padding: '0.65rem 0.85rem 0.65rem 2.3rem',
+                            background: 'rgba(10, 12, 16, 0.7)',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: '8px',
+                            color: '#ffffff',
+                            fontSize: '0.85rem',
+                            outline: 'none'
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      style={{
+                        background: 'linear-gradient(135deg, #e6c875 0%, #d4af37 50%, #b8860b 100%)',
+                        color: '#1a1608',
+                        border: 'none',
+                        padding: '0.75rem',
+                        borderRadius: '8px',
+                        fontWeight: 700,
+                        fontSize: '0.875rem',
+                        cursor: loading ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.45rem',
+                        boxShadow: '0 4px 15px rgba(212, 175, 55, 0.3)'
+                      }}
+                    >
+                      {loading ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
+                      <span>{loading ? 'Sending OTP...' : 'Send Verification OTP'}</span>
+                    </button>
+
+                    <div style={{ textAlign: 'center', marginTop: '0.25rem' }}>
+                      <span 
+                        onClick={() => { setAuthMode('login'); setError(''); setSuccessMsg(''); }}
+                        style={{ color: '#94a3b8', fontSize: '0.75rem', cursor: 'pointer' }}
+                      >
+                        ← Back to Sign In
+                      </span>
+                    </div>
+                  </form>
+                ) : (
+                  <form onSubmit={handleResetPassword} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.78rem', color: '#cbd5e1', fontWeight: 500, marginBottom: '0.35rem' }}>
+                        6-Digit Verification OTP *
+                      </label>
+                      <input
+                        type="text"
+                        value={otpCode}
+                        onChange={(e) => setOtpCode(e.target.value)}
+                        required
+                        maxLength={6}
+                        placeholder="Enter 6-digit OTP"
+                        style={{
+                          width: '100%',
+                          padding: '0.65rem 0.85rem',
+                          background: 'rgba(10, 12, 16, 0.7)',
+                          border: '1px solid #d4af37',
+                          borderRadius: '8px',
+                          color: '#f3e5ab',
+                          fontSize: '1.1rem',
+                          letterSpacing: '0.2em',
+                          textAlign: 'center',
+                          fontWeight: 700,
+                          outline: 'none'
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.78rem', color: '#cbd5e1', fontWeight: 500, marginBottom: '0.35rem' }}>
+                        New Password *
+                      </label>
+                      <input
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        required
+                        placeholder="Min 6 characters"
+                        style={{
+                          width: '100%',
+                          padding: '0.65rem 0.85rem',
+                          background: 'rgba(10, 12, 16, 0.7)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          borderRadius: '8px',
+                          color: '#ffffff',
+                          fontSize: '0.85rem',
+                          outline: 'none'
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.78rem', color: '#cbd5e1', fontWeight: 500, marginBottom: '0.35rem' }}>
+                        Confirm New Password *
+                      </label>
+                      <input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                        placeholder="Re-enter new password"
+                        style={{
+                          width: '100%',
+                          padding: '0.65rem 0.85rem',
+                          background: 'rgba(10, 12, 16, 0.7)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          borderRadius: '8px',
+                          color: '#ffffff',
+                          fontSize: '0.85rem',
+                          outline: 'none'
+                        }}
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      style={{
+                        background: 'linear-gradient(135deg, #e6c875 0%, #d4af37 50%, #b8860b 100%)',
+                        color: '#1a1608',
+                        border: 'none',
+                        padding: '0.75rem',
+                        borderRadius: '8px',
+                        fontWeight: 700,
+                        fontSize: '0.875rem',
+                        cursor: loading ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.45rem',
+                        boxShadow: '0 4px 15px rgba(212, 175, 55, 0.3)'
+                      }}
+                    >
+                      {loading ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                      <span>{loading ? 'Resetting Password...' : 'Save New Password & Sign In'}</span>
+                    </button>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', marginTop: '0.25rem' }}>
+                      <span 
+                        onClick={() => setForgotStep(1)}
+                        style={{ color: '#d4af37', cursor: 'pointer' }}
+                      >
+                        ← Resend OTP
+                      </span>
+                      <span 
+                        onClick={() => { setAuthMode('login'); setError(''); setSuccessMsg(''); }}
+                        style={{ color: '#94a3b8', cursor: 'pointer' }}
+                      >
+                        Cancel & Back to Sign In
+                      </span>
+                    </div>
+                  </form>
+                )}
+              </div>
             )}
 
           </div>
