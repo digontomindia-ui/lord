@@ -168,7 +168,7 @@ export const Login = () => {
         workshopName: regRole === 'MASTER' ? regBusinessName : undefined
       });
 
-      if (response?.data) {
+      if (response?.data?.accessToken) {
         loginUser(response.data);
         const role = response.data.user?.role;
         if (role === 'SUPER_ADMIN') navigate('/admin');
@@ -177,6 +177,14 @@ export const Login = () => {
         else if (role === 'TAILOR') navigate('/tailor');
         else if (role === 'DELIVERY_BOY') navigate('/delivery');
         else navigate('/');
+      } else {
+        setSuccessMsg(response?.data?.message || 'Registration submitted! Your account is pending Super Admin review. You can log in once approved.');
+        setAuthMode('login');
+        setRegName('');
+        setRegMobile('');
+        setRegEmail('');
+        setRegPassword('');
+        setRegBusinessName('');
       }
     } catch (err) {
       setError(err?.message || 'Registration failed. Please check your information.');

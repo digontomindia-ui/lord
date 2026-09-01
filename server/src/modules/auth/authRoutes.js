@@ -19,6 +19,7 @@ const router = express.Router();
 
 // Public auth endpoints
 router.post('/login', login);
+router.post('/register', register);
 router.post('/refresh', refreshToken);
 router.post('/seed', seedAccounts);
 router.get('/seed', seedAccounts);
@@ -32,8 +33,5 @@ router.get('/me', requireAuth, getMe);
 router.patch('/profile', requireAuth, updateProfile);
 router.patch('/password', requireAuth, changePassword);
 router.patch('/profile/password', requireAuth, changePassword);
-
-// Super Admin user registration
-router.post('/register', requireAuth, requireRole(['SUPER_ADMIN']), register);
 
 export default router;
